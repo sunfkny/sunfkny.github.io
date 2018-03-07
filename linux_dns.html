@@ -56,6 +56,7 @@ GATEWAY=192.168.X.254
 ###2.修改named.rfc1912.zones文件
     vim /etc/named.rfc1912.zones
 编辑如下
+
 ![](1.jpg)
 ###3.增加并修改正向解析文件和反向解析文件
 修改zone配置文件正向解析
@@ -65,6 +66,7 @@ cp -p named.localhost xxx.com.zone
 vim xxx.com.zone
 ```
 编辑如下
+
 ![](2.jpg)
 修改zone配置文件反向解析
 ```
@@ -72,6 +74,7 @@ cp -p named.localhost xxx.168.192.zone
 vim xxx.168.192.zone
 ```
 编辑如下
+
 ![](3.jpg)
 ##四、安全策略
 ###1.更改selinux设置
@@ -143,8 +146,9 @@ rpm -ivh bind-chroot.rpm
 <pre><code>vim /etc/named.rfc1912.zones
 </code></pre>
 
-<p>编辑如下
-<img src="1.jpg" alt="" title=""></p>
+<p>编辑如下</p>
+
+<p><img src="1.jpg" alt="" title=""></p>
 
 <h3 id="3">3.增加并修改正向解析文件和反向解析文件</h3>
 
@@ -155,16 +159,18 @@ cp -p named.localhost xxx.com.zone
 vim xxx.com.zone
 </code></pre>
 
-<p>编辑如下
-<img src="2.jpg" alt="" title="">
+<p>编辑如下</p>
+
+<p><img src="2.jpg" alt="" title="">
 修改zone配置文件反向解析</p>
 
 <pre><code>cp -p named.localhost xxx.168.192.zone
 vim xxx.168.192.zone
 </code></pre>
 
-<p>编辑如下
-<img src="3.jpg" alt="" title=""></p>
+<p>编辑如下</p>
+
+<p><img src="3.jpg" alt="" title=""></p>
 
 <h2 id="">四、安全策略</h2>
 
