@@ -25,8 +25,6 @@
 	</div>
 <div id="md" style="display: none;">
 <!-- markdown -->
-# Linux下搭建DNS服务器
-
 ## 一、准备工作
 ###1.将虚拟机网络设置为桥接
 ###2.配置网卡
@@ -98,8 +96,6 @@ vim 192.168.xxx
 </div>
 <div class="entry" id="main">
 <!-- content -->
-<h1 id="linuxdns">Linux下搭建DNS服务器</h1>
-
 <h2 id="">一、准备工作</h2>
 
 <h3 id="1">1.将虚拟机网络设置为桥接</h3>
@@ -164,8 +160,8 @@ vim xxx.com.zone
 <p><img src="2.jpg" alt="" title="">
 修改zone配置文件反向解析</p>
 
-<pre><code>cp -p named.localhost xxx.168.192.zone
-vim xxx.168.192.zone
+<pre><code>cp -p named.localhost 192.168.xxx.zone
+vim 192.168.xxx
 </code></pre>
 
 <p>编辑如下</p>
@@ -213,7 +209,7 @@ service named restart
 <br>
     <div id="disqus_thread"></div>
 	<div class="footer">
-		<p>© Copyright 2018 by sunfkny.<a href="http://isnowfy.github.io/simple/">New post.</a></p>
+		<p>© Copyright 2014 by isnowfy, Designed by isnowfy</p>
 	</div>
 </div>
 <script src="main.js"></script>
