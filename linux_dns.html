@@ -32,9 +32,11 @@
 ###2.配置网卡
     vim /etc/sysconfig/network-scripts/ifcfg-eth0
 修改如下内容
-    IPADDR=192.168.X.1
-    NETMASK=255.255.255.0
-    GATEWAY=192.168.X.254
+```
+IPADDR=192.168.X.1
+NETMASK=255.255.255.0
+GATEWAY=192.168.X.254
+```
 重启网络
     service network restart
 
@@ -57,14 +59,18 @@
 ![](1.jpg)
 ###3.增加并修改正向解析文件和反向解析文件
 修改zone配置文件正向解析
-    cd /var/named
-    cp -p named.localhost xxx.com.zone
-    vim xxx.com.zone
+```
+cd /var/named
+cp -p named.localhost xxx.com.zone
+vim xxx.com.zone
+```
 编辑如下
 ![](2.jpg)
 修改zone配置文件反向解析
-    cp -p named.localhost xxx.168.192.zone
-    vim xxx.168.192.zone
+```
+cp -p named.localhost xxx.168.192.zone
+vim xxx.168.192.zone
+```
 编辑如下
 ![](3.jpg)
 ##四、安全策略
@@ -100,11 +106,14 @@
 <pre><code>vim /etc/sysconfig/network-scripts/ifcfg-eth0
 </code></pre>
 
-<p>修改如下内容
-    IPADDR=192.168.X.1
-    NETMASK=255.255.255.0
-    GATEWAY=192.168.X.254
-重启网络
+<p>修改如下内容</p>
+
+<pre><code>IPADDR=192.168.X.1
+NETMASK=255.255.255.0
+GATEWAY=192.168.X.254
+</code></pre>
+
+<p>重启网络
     service network restart</p>
 
 <h2 id="">二、安装软件包</h2>
@@ -139,16 +148,22 @@ rpm -ivh bind-chroot.rpm
 
 <h3 id="3">3.增加并修改正向解析文件和反向解析文件</h3>
 
-<p>修改zone配置文件正向解析
-    cd /var/named
-    cp -p named.localhost xxx.com.zone
-    vim xxx.com.zone
-编辑如下
+<p>修改zone配置文件正向解析</p>
+
+<pre><code>cd /var/named
+cp -p named.localhost xxx.com.zone
+vim xxx.com.zone
+</code></pre>
+
+<p>编辑如下
 <img src="2.jpg" alt="" title="">
-修改zone配置文件反向解析
-    cp -p named.localhost xxx.168.192.zone
-    vim xxx.168.192.zone
-编辑如下
+修改zone配置文件反向解析</p>
+
+<pre><code>cp -p named.localhost xxx.168.192.zone
+vim xxx.168.192.zone
+</code></pre>
+
+<p>编辑如下
 <img src="3.jpg" alt="" title=""></p>
 
 <h2 id="">四、安全策略</h2>
