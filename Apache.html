@@ -88,7 +88,62 @@ echo "This is Long's web" >> index.html
 ```
 http://域名或者IP/~username
 ```
-####（2）
+####（2）虚拟目录
+mkdir -p /virdir/
+cd /virdir/
+echo "This is Virtual Directory sample" >> index.html
+chmod 705 index.html
+配置文件中添加
+```
+Alias /test "/virdir"
+```
+浏览
+```
+http://域名或者IP/test
+```
+即可看到虚拟目录中的页面
+##五、配置虚拟主机
+###1.配置基于IP地址的虚拟主机
+分别创建/var/www/ip1和/var/www/ip2
+```
+mkdir /var/www/ip1 /var/www/ip2
+echo "This is 192.168.xxx.1's web" >> index.html
+echo "This is 192.168.xxx.2's web" >> index.html
+```
+修改主配置文件
+```
+vim /etc/httpd/conf/httpd.conf
+```
+到达文件末尾（G）
+复制文件末尾最后7行（7yy）
+粘贴（p）
+```
+#<VirtualHost *:80>
+#    ServerAdmin webmaster@dummy-host.example.com
+#    DocumentRoot /www/docs/dummy-host.example.com
+#    ServerName dummy-host.example.com
+#    ErrorLog logs/dummy-host.example.com-error_log
+#    CustomLog logs/dummy-host.example.com-access_log common
+#</VirtualHost>
+```
+删去注释并修改
+```
+<VirtualHost 192.168.xxx.1>
+    ...
+    DocumentRoot /var/www/ip1
+    ...
+</VirtualHost>
+<VirtualHost 192.168.xxx.2>
+    ...
+    DocumentRoot /var/www/ip2
+    ...
+</VirtualHost>
+```
+浏览
+```
+http://192.168.xxx.1
+http://192.168.xxx.2
+```
 <!-- markdown end -->
 </div>
 <div class="entry" id="main">
@@ -184,7 +239,72 @@ echo "This is Long's web" &gt;&gt; index.html
 <pre><code>http://域名或者IP/~username
 </code></pre>
 
-<h4 id="2">（2）</h4>
+<h4 id="2">（2）虚拟目录</h4>
+
+<p>mkdir -p /virdir/
+cd /virdir/
+echo "This is Virtual Directory sample" &gt;&gt; index.html
+chmod 705 index.html
+配置文件中添加</p>
+
+<pre><code>Alias /test "/virdir"
+</code></pre>
+
+<p>浏览</p>
+
+<pre><code>http://域名或者IP/test
+</code></pre>
+
+<p>即可看到虚拟目录中的页面</p>
+
+<h2 id="">五、配置虚拟主机</h2>
+
+<h3 id="1ip">1.配置基于IP地址的虚拟主机</h3>
+
+<p>分别创建/var/www/ip1和/var/www/ip2</p>
+
+<pre><code>mkdir /var/www/ip1 /var/www/ip2
+echo "This is 192.168.xxx.1's web" &gt;&gt; index.html
+echo "This is 192.168.xxx.2's web" &gt;&gt; index.html
+</code></pre>
+
+<p>修改主配置文件</p>
+
+<pre><code>vim /etc/httpd/conf/httpd.conf
+</code></pre>
+
+<p>到达文件末尾（G）
+复制文件末尾最后7行（7yy）
+粘贴（p）</p>
+
+<pre><code>#&lt;VirtualHost *:80&gt;
+#    ServerAdmin webmaster@dummy-host.example.com
+#    DocumentRoot /www/docs/dummy-host.example.com
+#    ServerName dummy-host.example.com
+#    ErrorLog logs/dummy-host.example.com-error_log
+#    CustomLog logs/dummy-host.example.com-access_log common
+#&lt;/VirtualHost&gt;
+</code></pre>
+
+<p>删去注释并修改</p>
+
+<pre><code>&lt;VirtualHost 192.168.xxx.1&gt;
+    ...
+    DocumentRoot /var/www/ip1
+    ...
+&lt;/VirtualHost&gt;
+&lt;VirtualHost 192.168.xxx.2&gt;
+    ...
+    DocumentRoot /var/www/ip2
+    ...
+&lt;/VirtualHost&gt;
+</code></pre>
+
+<p>浏览</p>
+
+<pre><code>http://192.168.xxx.1
+http://192.168.xxx.2
+</code></pre>
 <!-- content end -->
 </div>
 <br>
