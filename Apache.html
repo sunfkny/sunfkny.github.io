@@ -161,8 +161,34 @@ Listen 8090
     ...
 </VirtualHost>
 ```
+###2.配置基于域名的虚拟主机
+####（1）安装bind和bind-chroot
+    cd /media/RHEL-6.6\ Server.i386/Packages
+    rpm -ivh bind.rpm
+    rpm -ivh bind-chroot.rpm
+修改配置文件
+####（2）修改DNS主配置文件
+    vim /etc/named.conf
+修改如下内容
+    listen on port 53 { any; }
+    allow-query { any; }
+####（3）修改named.rfc1912.zones文件
+    vim /etc/named.rfc1912.zones
+复制最后11行（11yy） 粘贴（p）修改为
+```
+zone "long.com" IN {
+        type master;
+        file "long.com.zone";
+        allow-update { none; };
+};
 
+zone "192.168.29.in-addr.arpa" IN {
+        type master;
+        file "29.168.192.zone";
+        allow-update { none; };
+};
 
+```
 
 
 
@@ -349,6 +375,46 @@ Listen 8090
     DocumentRoot /var/www/port8090
     ...
 &lt;/VirtualHost&gt;
+</code></pre>
+
+<h3 id="2">2.配置基于域名的虚拟主机</h3>
+
+<h4 id="1bindbindchroot">（1）安装bind和bind-chroot</h4>
+
+<pre><code>cd /media/RHEL-6.6\ Server.i386/Packages
+rpm -ivh bind.rpm
+rpm -ivh bind-chroot.rpm
+</code></pre>
+
+<p>修改配置文件</p>
+
+<h4 id="2dns">（2）修改DNS主配置文件</h4>
+
+<pre><code>vim /etc/named.conf
+</code></pre>
+
+<p>修改如下内容
+    listen on port 53 { any; }
+    allow-query { any; }</p>
+
+<h4 id="3namedrfc1912zones">（3）修改named.rfc1912.zones文件</h4>
+
+<pre><code>vim /etc/named.rfc1912.zones
+</code></pre>
+
+<p>复制最后11行（11yy） 粘贴（p）修改为</p>
+
+<pre><code>zone "long.com" IN {
+        type master;
+        file "long.com.zone";
+        allow-update { none; };
+};
+
+zone "192.168.29.in-addr.arpa" IN {
+        type master;
+        file "29.168.192.zone";
+        allow-update { none; };
+};
 </code></pre>
 <!-- content end -->
 </div>
