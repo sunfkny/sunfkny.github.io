@@ -189,7 +189,28 @@ zone "192.168.29.in-addr.arpa" IN {
 };
 
 ```
-
+####（4）增加并修改正向解析文件
+```
+cd /var/named
+cp -p named.localhost long.com.zone
+vim long.com.zone
+```
+编辑如下
+```
+$TTL 1D
+@	IN SOA	@ root.long.com. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+	NS	@
+	A	127.0.0.1
+	AAAA	::1
+dns	IN	A	192.168.29.1
+aaa	IN	A	192.168.29.1
+bbb	IN	A	192.168.29.1
+```
 
 
 
@@ -415,6 +436,30 @@ zone "192.168.29.in-addr.arpa" IN {
         file "29.168.192.zone";
         allow-update { none; };
 };
+</code></pre>
+
+<h4 id="4">（4）增加并修改正向解析文件</h4>
+
+<pre><code>cd /var/named
+cp -p named.localhost long.com.zone
+vim long.com.zone
+</code></pre>
+
+<p>编辑如下</p>
+
+<pre><code>$TTL 1D
+@    IN SOA  @ root.long.com. (
+                    0   ; serial
+                    1D  ; refresh
+                    1H  ; retry
+                    1W  ; expire
+                    3H )    ; minimum
+    NS  @
+    A   127.0.0.1
+    AAAA    ::1
+dns    IN  A   192.168.29.1
+aaa    IN  A   192.168.29.1
+bbb    IN  A   192.168.29.1
 </code></pre>
 <!-- content end -->
 </div>
