@@ -38,10 +38,57 @@ NETMASK=255.255.255.0
 重启网络
     service network restart
 
-##二、安装软件包
+##二、安全策略
+###1.更改selinux设置
+    setenforce 0
+###2.关闭防火墙
+    service iptables stop
+或者使用
+    setup
+> 选择Firewall configuration下的Security Level
+
+> 设置为Disabled
+
+> 保存退出
+
+##三、安装软件包
 ###1.虚拟机挂载光驱，镜像文件选择RHEL 6.6.iso
 ###2.安装httpd.rpm
     rpm -ivh httpd-2.2.15-39.el6.i686.rpm
+
+##四、修改配置文件
+###1.编辑Apache主配置文件
+    vim /etc/httpd/conf/httpd.conf
+###2.常用配置修改方法
+
+####（1）用户个人主页
+```
+user add long
+passwd long
+chmod 705 /home/long
+mkdir /home/long/public_html
+cd /home/long/public_html
+echo "This is Long's web" >> index.html
+```
+配置文件中
+```
+<IfModule mod_userdir.c>
+	UserDir disabled
+	#UserDir public_html
+</IfModule>
+```
+修改为
+```
+<IfModule mod_userdir.c>
+	#UserDir disabled
+	UserDir public_html
+</IfModule>
+```
+浏览格式为
+```
+http://域名或者IP/~username
+```
+####（2）
 <!-- markdown end -->
 </div>
 <div class="entry" id="main">
@@ -65,7 +112,30 @@ NETMASK=255.255.255.0
 <p>重启网络
     service network restart</p>
 
-<h2 id="">二、安装软件包</h2>
+<h2 id="">二、安全策略</h2>
+
+<h3 id="1selinux">1.更改selinux设置</h3>
+
+<pre><code>setenforce 0
+</code></pre>
+
+<h3 id="2">2.关闭防火墙</h3>
+
+<pre><code>service iptables stop
+</code></pre>
+
+<p>或者使用
+    setup</p>
+
+<blockquote>
+  <p>选择Firewall configuration下的Security Level</p>
+  
+  <p>设置为Disabled</p>
+  
+  <p>保存退出</p>
+</blockquote>
+
+<h2 id="">三、安装软件包</h2>
 
 <h3 id="1rhel66iso">1.虚拟机挂载光驱，镜像文件选择RHEL 6.6.iso</h3>
 
@@ -73,6 +143,48 @@ NETMASK=255.255.255.0
 
 <pre><code>rpm -ivh httpd-2.2.15-39.el6.i686.rpm
 </code></pre>
+
+<h2 id="">四、修改配置文件</h2>
+
+<h3 id="1apache">1.编辑Apache主配置文件</h3>
+
+<pre><code>vim /etc/httpd/conf/httpd.conf
+</code></pre>
+
+<h3 id="2">2.常用配置修改方法</h3>
+
+<h4 id="1">（1）用户个人主页</h4>
+
+<pre><code>user add long
+passwd long
+chmod 705 /home/long
+mkdir /home/long/public_html
+cd /home/long/public_html
+echo "This is Long's web" &gt;&gt; index.html
+</code></pre>
+
+<p>配置文件中</p>
+
+<pre><code>&lt;IfModule mod_userdir.c&gt;
+    UserDir disabled
+    #UserDir public_html
+&lt;/IfModule&gt;
+</code></pre>
+
+<p>修改为</p>
+
+<pre><code>&lt;IfModule mod_userdir.c&gt;
+    #UserDir disabled
+    UserDir public_html
+&lt;/IfModule&gt;
+</code></pre>
+
+<p>浏览格式为</p>
+
+<pre><code>http://域名或者IP/~username
+</code></pre>
+
+<h4 id="2">（2）</h4>
 <!-- content end -->
 </div>
 <br>
