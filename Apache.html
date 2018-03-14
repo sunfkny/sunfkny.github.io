@@ -107,7 +107,9 @@ http://域名或者IP/test
 分别创建/var/www/ip1和/var/www/ip2
 ```
 mkdir /var/www/ip1 /var/www/ip2
+cd /var/www/ip1
 echo "This is 192.168.xxx.1's web" >> index.html
+cd /var/www/ip2
 echo "This is 192.168.xxx.2's web" >> index.html
 ```
 修改主配置文件
@@ -181,13 +183,6 @@ zone "long.com" IN {
         file "long.com.zone";
         allow-update { none; };
 };
-
-zone "192.168.29.in-addr.arpa" IN {
-        type master;
-        file "29.168.192.zone";
-        allow-update { none; };
-};
-
 ```
 ####（4）增加并修改正向解析文件
 ```
@@ -211,6 +206,33 @@ dns	IN	A	192.168.29.1
 aaa	IN	A	192.168.29.1
 bbb	IN	A	192.168.29.1
 ```
+####（4）分别创建/var/www/aaa和/var/www/bbb
+```
+mkdir /var/www/aaa /var/www/bbb
+cd /var/www/aaa
+echo "This is aaa web" >> index.html
+cd /var/www/bbb
+echo "This is bbb web" >> index.html
+```
+####（5）修改Apache主配置文件
+```
+<VirtualHost 192.168.xxx.1>
+    ...
+    DocumentRoot /var/www/aaa
+    ...
+</VirtualHost>
+<VirtualHost 192.168.xxx.1>
+    ...
+    DocumentRoot /var/www/bbb
+    ...
+</VirtualHost>
+```
+浏览
+```
+http://aaa.long.com
+http://bbb.long.com
+```
+
 
 
 
@@ -337,7 +359,9 @@ chmod 705 index.html
 <p>分别创建/var/www/ip1和/var/www/ip2</p>
 
 <pre><code>mkdir /var/www/ip1 /var/www/ip2
+cd /var/www/ip1
 echo "This is 192.168.xxx.1's web" &gt;&gt; index.html
+cd /var/www/ip2
 echo "This is 192.168.xxx.2's web" &gt;&gt; index.html
 </code></pre>
 
@@ -430,12 +454,6 @@ rpm -ivh bind-chroot.rpm
         file "long.com.zone";
         allow-update { none; };
 };
-
-zone "192.168.29.in-addr.arpa" IN {
-        type master;
-        file "29.168.192.zone";
-        allow-update { none; };
-};
 </code></pre>
 
 <h4 id="4">（4）增加并修改正向解析文件</h4>
@@ -460,6 +478,35 @@ vim long.com.zone
 dns    IN  A   192.168.29.1
 aaa    IN  A   192.168.29.1
 bbb    IN  A   192.168.29.1
+</code></pre>
+
+<h4 id="4varwwwaaavarwwwbbb">（4）分别创建/var/www/aaa和/var/www/bbb</h4>
+
+<pre><code>mkdir /var/www/aaa /var/www/bbb
+cd /var/www/aaa
+echo "This is aaa web" &gt;&gt; index.html
+cd /var/www/bbb
+echo "This is bbb web" &gt;&gt; index.html
+</code></pre>
+
+<h4 id="5apache">（5）修改Apache主配置文件</h4>
+
+<pre><code>&lt;VirtualHost 192.168.xxx.1&gt;
+    ...
+    DocumentRoot /var/www/aaa
+    ...
+&lt;/VirtualHost&gt;
+&lt;VirtualHost 192.168.xxx.1&gt;
+    ...
+    DocumentRoot /var/www/bbb
+    ...
+&lt;/VirtualHost&gt;
+</code></pre>
+
+<p>浏览</p>
+
+<pre><code>http://aaa.long.com
+http://bbb.long.com
 </code></pre>
 <!-- content end -->
 </div>
