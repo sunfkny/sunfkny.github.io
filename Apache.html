@@ -89,10 +89,12 @@ echo "This is Long's web" >> index.html
 http://域名或者IP/~username
 ```
 ####（2）虚拟目录
+```
 mkdir -p /virdir/
 cd /virdir/
 echo "This is Virtual Directory sample" >> index.html
 chmod 705 index.html
+```
 配置文件中添加
 ```
 Alias /test "/virdir"
@@ -331,11 +333,13 @@ echo "This is Long's web" &gt;&gt; index.html
 
 <h4 id="2">（2）虚拟目录</h4>
 
-<p>mkdir -p /virdir/
+<pre><code>mkdir -p /virdir/
 cd /virdir/
 echo "This is Virtual Directory sample" &gt;&gt; index.html
 chmod 705 index.html
-配置文件中添加</p>
+</code></pre>
+
+<p>配置文件中添加</p>
 
 <pre><code>Alias /test "/virdir"
 </code></pre>
