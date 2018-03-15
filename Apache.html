@@ -32,7 +32,7 @@
 修改如下内容
 ```
 BOOTPROTO=static
-IPADDR=192.168.X.1
+IPADDR=192.168.xxx.1
 NETMASK=255.255.255.0
 ```
 重启网络
@@ -222,11 +222,13 @@ NameVirtualhost 192.168.xxx.1
 ...
 <VirtualHost 192.168.xxx.1>
     ...
+    ServerName aaa.long.com
     DocumentRoot /var/www/aaa
     ...
 </VirtualHost>
 <VirtualHost 192.168.xxx.1>
     ...
+    ServerName bbb.long.com
     DocumentRoot /var/www/bbb
     ...
 </VirtualHost>
@@ -252,7 +254,7 @@ http://bbb.long.com
 <p>修改如下内容</p>
 
 <pre><code>BOOTPROTO=static
-IPADDR=192.168.X.1
+IPADDR=192.168.xxx.1
 NETMASK=255.255.255.0
 </code></pre>
 
@@ -494,11 +496,13 @@ echo "This is bbb web" &gt;&gt; index.html
 ...
 &lt;VirtualHost 192.168.xxx.1&gt;
     ...
+    ServerName aaa.long.com
     DocumentRoot /var/www/aaa
     ...
 &lt;/VirtualHost&gt;
 &lt;VirtualHost 192.168.xxx.1&gt;
     ...
+    ServerName bbb.long.com
     DocumentRoot /var/www/bbb
     ...
 &lt;/VirtualHost&gt;
