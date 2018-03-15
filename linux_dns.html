@@ -32,7 +32,7 @@
 修改如下内容
 ```
 BOOTPROTO=static
-IPADDR=192.168.X.1
+IPADDR=192.168.xxx.1
 NETMASK=255.255.255.0
 ```
 重启网络
@@ -41,17 +41,18 @@ service network restart
 ```
 ##二、安装软件包
 ###1.虚拟机挂载光驱，镜像文件选择RHEL 6.6.iso
-###2.安装bind和bind-chroot
+###2.安装bind
     cd /media/RHEL-6.6\ Server.i386/Packages
-    rpm -ivh bind.rpm
-    rpm -ivh bind-chroot.rpm
+    rpm -ivh bind-9.8.2-0.30.rc1.el6.i686.rpm
 
 ##三、修改配置文件
 ###1.修改DNS主配置文件
     vim /etc/named.conf
 修改如下内容
-    listen on port 53 { any; }
-    allow-query { any; }
+```
+listen on port 53 { any; }
+allow-query { any; }
+```
 ###2.修改named.rfc1912.zones文件
     vim /etc/named.rfc1912.zones
 编辑如下
@@ -109,7 +110,7 @@ vim 192.168.xxx
 <p>修改如下内容</p>
 
 <pre><code>BOOTPROTO=static
-IPADDR=192.168.X.1
+IPADDR=192.168.xxx.1
 NETMASK=255.255.255.0
 </code></pre>
 
@@ -122,11 +123,10 @@ NETMASK=255.255.255.0
 
 <h3 id="1rhel66iso">1.虚拟机挂载光驱，镜像文件选择RHEL 6.6.iso</h3>
 
-<h3 id="2bindbindchroot">2.安装bind和bind-chroot</h3>
+<h3 id="2bind">2.安装bind</h3>
 
 <pre><code>cd /media/RHEL-6.6\ Server.i386/Packages
-rpm -ivh bind.rpm
-rpm -ivh bind-chroot.rpm
+rpm -ivh bind-9.8.2-0.30.rc1.el6.i686.rpm
 </code></pre>
 
 <h2 id="">三、修改配置文件</h2>
@@ -136,9 +136,11 @@ rpm -ivh bind-chroot.rpm
 <pre><code>vim /etc/named.conf
 </code></pre>
 
-<p>修改如下内容
-    listen on port 53 { any; }
-    allow-query { any; }</p>
+<p>修改如下内容</p>
+
+<pre><code>listen on port 53 { any; }
+allow-query { any; }
+</code></pre>
 
 <h3 id="2namedrfc1912zones">2.修改named.rfc1912.zones文件</h3>
 
