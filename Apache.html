@@ -183,18 +183,26 @@ Listen 8090
 </VirtualHost>
 ```
 ###3.配置基于域名的虚拟主机
-####（1）安装bind和bind-chroot
-    cd /media/RHEL-6.6\ Server.i386/Packages
-    rpm -ivh bind.rpm
-    rpm -ivh bind-chroot.rpm
+####（1）安装bind
+```
+cd /media/RHEL-6.6\ Server.i386/Packages
+rpm -ivh bind-9.8.2-0.30.rc1.el6.i686.rpm
+```
 修改配置文件
 ####（2）修改DNS主配置文件
-    vim /etc/named.conf
+```
+vim /etc/named.conf
+```
 修改如下内容
-    listen on port 53 { any; }
-    allow-query { any; }
+```
+listen on port 53 { any; }
+...
+allow-query { any; }
+```
 ####（3）修改named.rfc1912.zones文件
-    vim /etc/named.rfc1912.zones
+```
+vim /etc/named.rfc1912.zones
+```
 复制最后11行（11yy） 粘贴（p）修改为
 ```
 zone "long.com" IN {
@@ -462,11 +470,10 @@ Listen 8090
 
 <h3 id="3">3.配置基于域名的虚拟主机</h3>
 
-<h4 id="1bindbindchroot">（1）安装bind和bind-chroot</h4>
+<h4 id="1bind">（1）安装bind</h4>
 
 <pre><code>cd /media/RHEL-6.6\ Server.i386/Packages
-rpm -ivh bind.rpm
-rpm -ivh bind-chroot.rpm
+rpm -ivh bind-9.8.2-0.30.rc1.el6.i686.rpm
 </code></pre>
 
 <p>修改配置文件</p>
@@ -476,9 +483,12 @@ rpm -ivh bind-chroot.rpm
 <pre><code>vim /etc/named.conf
 </code></pre>
 
-<p>修改如下内容
-    listen on port 53 { any; }
-    allow-query { any; }</p>
+<p>修改如下内容</p>
+
+<pre><code>listen on port 53 { any; }
+...
+allow-query { any; }
+</code></pre>
 
 <h4 id="3namedrfc1912zones">（3）修改named.rfc1912.zones文件</h4>
 
