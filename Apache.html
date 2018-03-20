@@ -106,6 +106,23 @@ http://域名或者IP/test
 即可看到虚拟目录中的页面
 ##五、配置虚拟主机
 ###1.配置基于IP地址的虚拟主机
+####（1）配置虚拟网卡
+```
+cd /etc/sysconfig/network-scripts/
+cp -p ifcfg-eth0 ifcfg-eth0:1
+vim ifcfg-eth0:1
+```
+修改如下内容
+```
+DEVICE=eth0:1
+BOOTPROTO=static
+IPADDR=192.168.xxx.1
+NETMASK=255.255.255.0
+```
+重启网络
+```
+service network restart
+```
 分别创建/var/www/ip1和/var/www/ip2
 ```
 mkdir /var/www/ip1 /var/www/ip2
@@ -114,7 +131,7 @@ echo "This is 192.168.xxx.1's web" >> index.html
 cd /var/www/ip2
 echo "This is 192.168.xxx.2's web" >> index.html
 ```
-修改主配置文件
+####（2）修改主配置文件
 ```
 vim /etc/httpd/conf/httpd.conf
 ```
@@ -143,7 +160,7 @@ vim /etc/httpd/conf/httpd.conf
     ...
 </VirtualHost>
 ```
-浏览
+####（3）浏览
 ```
 http://192.168.xxx.1
 http://192.168.xxx.2
@@ -233,7 +250,7 @@ NameVirtualhost 192.168.xxx.1
     ...
 </VirtualHost>
 ```
-浏览
+####（6）浏览
 ```
 http://aaa.long.com
 http://bbb.long.com
@@ -357,6 +374,26 @@ chmod 705 index.html
 
 <h3 id="1ip">1.配置基于IP地址的虚拟主机</h3>
 
+<h4 id="1">（1）配置虚拟网卡</h4>
+
+<pre><code>cd /etc/sysconfig/network-scripts/
+cp -p ifcfg-eth0 ifcfg-eth0:1
+vim ifcfg-eth0:1
+</code></pre>
+
+<p>修改如下内容</p>
+
+<pre><code>DEVICE=eth0:1
+BOOTPROTO=static
+IPADDR=192.168.xxx.1
+NETMASK=255.255.255.0
+</code></pre>
+
+<p>重启网络</p>
+
+<pre><code>service network restart
+</code></pre>
+
 <p>分别创建/var/www/ip1和/var/www/ip2</p>
 
 <pre><code>mkdir /var/www/ip1 /var/www/ip2
@@ -366,7 +403,7 @@ cd /var/www/ip2
 echo "This is 192.168.xxx.2's web" &gt;&gt; index.html
 </code></pre>
 
-<p>修改主配置文件</p>
+<h4 id="2">（2）修改主配置文件</h4>
 
 <pre><code>vim /etc/httpd/conf/httpd.conf
 </code></pre>
@@ -398,7 +435,7 @@ echo "This is 192.168.xxx.2's web" &gt;&gt; index.html
 &lt;/VirtualHost&gt;
 </code></pre>
 
-<p>浏览</p>
+<h4 id="3">（3）浏览</h4>
 
 <pre><code>http://192.168.xxx.1
 http://192.168.xxx.2
@@ -508,7 +545,7 @@ echo "This is bbb web" &gt;&gt; index.html
 &lt;/VirtualHost&gt;
 </code></pre>
 
-<p>浏览</p>
+<h4 id="6">（6）浏览</h4>
 
 <pre><code>http://aaa.long.com
 http://bbb.long.com
