@@ -123,6 +123,7 @@ NETMASK=255.255.255.0
 ```
 service network restart
 ```
+####（2）创建目录和页面
 分别创建/var/www/ip1和/var/www/ip2
 ```
 mkdir /var/www/ip1 /var/www/ip2
@@ -131,7 +132,7 @@ echo "This is 192.168.xxx.1's web" >> index.html
 cd /var/www/ip2
 echo "This is 192.168.xxx.2's web" >> index.html
 ```
-####（2）修改主配置文件
+####（3）修改主配置文件
 ```
 vim /etc/httpd/conf/httpd.conf
 ```
@@ -160,7 +161,7 @@ vim /etc/httpd/conf/httpd.conf
     ...
 </VirtualHost>
 ```
-####（3）浏览
+####（4）浏览
 ```
 http://192.168.xxx.1
 http://192.168.xxx.2
@@ -402,6 +403,8 @@ NETMASK=255.255.255.0
 <pre><code>service network restart
 </code></pre>
 
+<h4 id="2">（2）创建目录和页面</h4>
+
 <p>分别创建/var/www/ip1和/var/www/ip2</p>
 
 <pre><code>mkdir /var/www/ip1 /var/www/ip2
@@ -411,7 +414,7 @@ cd /var/www/ip2
 echo "This is 192.168.xxx.2's web" &gt;&gt; index.html
 </code></pre>
 
-<h4 id="2">（2）修改主配置文件</h4>
+<h4 id="3">（3）修改主配置文件</h4>
 
 <pre><code>vim /etc/httpd/conf/httpd.conf
 </code></pre>
@@ -443,7 +446,7 @@ echo "This is 192.168.xxx.2's web" &gt;&gt; index.html
 &lt;/VirtualHost&gt;
 </code></pre>
 
-<h4 id="3">（3）浏览</h4>
+<h4 id="4">（4）浏览</h4>
 
 <pre><code>http://192.168.xxx.1
 http://192.168.xxx.2
