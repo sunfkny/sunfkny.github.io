@@ -106,6 +106,7 @@ vim /etc/httpd/conf/httpd.conf
 到达文件末尾（G）
 复制文件末尾最后7行（7yy）
 粘贴（p）
+
 ```
 #<VirtualHost *:80>
 #    ServerAdmin webmaster@dummy-host.example.com
@@ -115,7 +116,9 @@ vim /etc/httpd/conf/httpd.conf
 #    CustomLog logs/dummy-host.example.com-access_log common
 #</VirtualHost>
 ```
+
 删去注释并修改
+
 ```
 <VirtualHost 192.168.xxx.1>
     ...
@@ -128,13 +131,17 @@ vim /etc/httpd/conf/httpd.conf
     ...
 </VirtualHost>
 ```
+
 #### （4）浏览
+
 ```
 http://192.168.xxx.1
 http://192.168.xxx.2
 ```
+
 ### 2.配置基于端口号的虚拟主机
 操作同上（2）（3）（4），不过要添加Listen 端口号，在IP后加“:端口“
+
 ```
 Listen 8080
 Listen 8090
@@ -150,18 +157,24 @@ Listen 8090
     ...
 </VirtualHost>
 ```
+
 ### 3.配置基于域名的虚拟主机
 #### （1）安装bind
+
 ```
 cd /media/RHEL-6.6\ Server.i386/Packages
 rpm -ivh bind-9.8.2-0.30.rc1.el6.i686.rpm
 ```
+
 修改配置文件
 #### （2）修改DNS主配置文件
+
 ```
 vim /etc/named.conf
 ```
+
 修改如下内容
+
 ```
 listen on port 53 { any; }
 ...
@@ -169,23 +182,30 @@ allow-query { any; }
 ```
 #### （3）修改named.rfc1912.zones文件
 ```
+
 vim /etc/named.rfc1912.zones
+
 ```
 复制最后11行（11yy） 粘贴（p）修改为
 ```
+
 zone "long.com" IN {
         type master;
         file "long.com.zone";
         allow-update { none; };
 };
 ```
+
 #### （4）增加并修改正向解析文件
+
 ```
 cd /var/named
 cp -p named.localhost long.com.zone
 vim long.com.zone
 ```
+
 编辑如下
+
 ```
 $TTL 1D
 @	IN SOA	@ root.long.com. (
@@ -201,7 +221,9 @@ dns	IN	A	192.168.29.1
 aaa	IN	A	192.168.29.1
 bbb	IN	A	192.168.29.1
 ```
+
 #### （4）分别创建/var/www/aaa和/var/www/bbb
+
 ```
 mkdir /var/www/aaa /var/www/bbb
 cd /var/www/aaa
@@ -209,7 +231,9 @@ echo "This is aaa web" >> index.html
 cd /var/www/bbb
 echo "This is bbb web" >> index.html
 ```
+
 #### （5）修改Apache主配置文件
+
 ```
 NameVirtualhost 192.168.xxx.1
 ...
@@ -226,7 +250,9 @@ NameVirtualhost 192.168.xxx.1
     ...
 </VirtualHost>
 ```
+
 #### （6）浏览
+
 ```
 http://aaa.long.com
 http://bbb.long.com
