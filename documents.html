@@ -14,19 +14,35 @@
 
 <body class="mdui-theme-primary-indigo mdui-theme-accent-pink mdui-drawer-body-left mdui-appbar-with-toolbar">
 
-
   <header class="mdui-appbar mdui-appbar-fixed">
-      <div class="mdui-toolbar mdui-color-theme">
-          <span class="mdui-btn mdui-btn-icon mdui-ripple" onClick="window.history.go(-1)"><i class="mdui-icon material-icons">&#xe5c4;</i></span>
-          <a class="mdui-typo-title">文章归档</a>
-          <div class="mdui-toolbar-spacer"></div>
-      </div>
+    <div class="mdui-toolbar mdui-color-theme">
+      <span class="mdui-btn mdui-btn-icon mdui-ripple" onClick="window.history.go(-1)"><i class="mdui-icon material-icons">&#xe5c4;</i></span>
+      <a class="mdui-typo-title">文章归档</a>
+      <div class="mdui-toolbar-spacer"></div>
+
+
+
+      <a class="mdui-btn mdui-btn-icon" mdui-menu="{target: '#menu'}">
+        <i class="mdui-icon material-icons">&#xe5d4;</i>
+      </a>
+
+      <ul class="mdui-menu" id="menu">
+        <li class="mdui-menu-item">
+          <a href="javascript:location.reload();" class="mdui-ripple">刷新</a>
+          <a href="index.html" class="mdui-ripple">首页</a>
+          <a mdui-drawer="{target: '#drawer', swipe: true}" class="mdui-ripple">菜单</a>
+        </li>
+      </ul>
+
+
+    </div>
   </header>
+
 
   <div class="mdui-drawer" id="drawer">
     <ul class="mdui-list">
       <li class="mdui-list-item mdui-ripple" onclick="window.location='index.html'">
-        <i class="mdui-list-item-icon mdui-icon material-icons">&#xe88a;</i>;</i>
+        <i class="mdui-list-item-icon mdui-icon material-icons">&#xe88a;</i></i>
         <a class="mdui-list-item-content">首页</a>
       </li>
       <li class="mdui-list-item mdui-ripple" onclick="window.location='documents.html'">
@@ -55,34 +71,29 @@
   </div>
 
 
-<div class="mdui-container doc-container mdui-m-y-2">
+  <div class="mdui-container doc-container mdui-m-y-2">
 
-  <div class="mdui-list">
-    <a href="./documents/Apache.html" class="mdui-list-item mdui-ripple"><i
-        class="mdui-icon mdui-list-item-icon material-icons">&#xe261;</i>
-      <div class="mdui-list-item-content">Apache</div>
-    </a>
-    <a href="./documents/linux_dns.html" class="mdui-list-item mdui-ripple"><i
-        class="mdui-icon mdui-list-item-icon material-icons">&#xe261;</i>
-      <div class="mdui-list-item-content">DNS</div>
-    </a>
-    <a href="./documents/login_switch.html" class="mdui-list-item mdui-ripple"><i
-        class="mdui-icon mdui-list-item-icon material-icons">&#xe261;</i>
-      <div class="mdui-list-item-content">交换机</div>
-    </a>
-    <a href="./documents/Thoughts-on-the-research-of-college-students-honesty-education.html"
-      class="mdui-list-item mdui-ripple"><i class="mdui-icon mdui-list-item-icon material-icons">&#xe261;</i>
-      <div class="mdui-list-item-content">学生诚信及其教育问题</div>
-    </a>
+    <div class="mdui-list">
+      <a href="./documents/Apache.html" class="mdui-list-item mdui-ripple"><i class="mdui-icon mdui-list-item-icon material-icons">&#xe261;</i>
+        <div class="mdui-list-item-content">Apache</div>
+      </a>
+      <a href="./documents/linux_dns.html" class="mdui-list-item mdui-ripple"><i class="mdui-icon mdui-list-item-icon material-icons">&#xe261;</i>
+        <div class="mdui-list-item-content">DNS</div>
+      </a>
+      <a href="./documents/login_switch.html" class="mdui-list-item mdui-ripple"><i class="mdui-icon mdui-list-item-icon material-icons">&#xe261;</i>
+        <div class="mdui-list-item-content">交换机</div>
+      </a>
+      <a href="./documents/Thoughts-on-the-research-of-college-students-honesty-education.html" class="mdui-list-item mdui-ripple"><i class="mdui-icon mdui-list-item-icon material-icons">&#xe261;</i>
+        <div class="mdui-list-item-content">学生诚信及其教育问题</div>
+      </a>
+    </div>
+
   </div>
-
-</div>
 
 
 
   <div class="mdui-container" align="center">
-    <a href="https://github.com/sunfkny/sunfkny.github.io" target="_blank"
-      class="mdui-text-color-black-secondary">Powerd by github.com</a>
+    <a href="https://github.com/sunfkny/sunfkny.github.io" target="_blank" class="mdui-text-color-black-secondary">Powerd by github.com</a>
   </div>
 
 

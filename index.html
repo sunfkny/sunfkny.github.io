@@ -19,7 +19,17 @@
       <span id="toggle" mdui-drawer="{target: '#drawer', swipe: true}" class="mdui-btn mdui-btn-icon mdui-ripple"><i
           class="mdui-icon material-icons">menu</i></span>
       <a class="mdui-typo-title" href="../">首页</a>
-      <div class="mdui-toolbar-spacer"></div>
+      <div class="mdui-toolbar-spacer"></div>    <div class="">
+          <a class="mdui-btn mdui-btn-icon" mdui-menu="{target: '#menu'}"><i class="mdui-icon material-icons">&#xe5d4;</i></a>
+          <ul class="mdui-menu" id="menu">
+            <li class="mdui-menu-item">
+              <a href="javascript:location.reload();" class="mdui-ripple">刷新</a>
+              <a href="index.html" class="mdui-ripple">首页</a>
+              <a mdui-drawer="{target: '#drawer', swipe: true}" class="mdui-ripple">菜单</a>
+            </li>
+          </ul>
+        </div>
+    
     </div>
   </header>
 
