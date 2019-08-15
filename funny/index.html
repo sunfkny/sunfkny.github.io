@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="viewport" content="width=device-width,hight=device-hight,minimum-scale=1.0,maximum-scale=1.0,ser-scalable=none"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>funny</title>
 
 <style type="text/css">
@@ -29,10 +29,17 @@ center {
 <script type="text/javascript" src="js/Snow.js"></script>
 
 <script type="text/javascript">
-	var SCREEN_WIDTH = window.innerWidth;//
+
+window.onresize = function(){
+	location.reload();
+}
+</script>
+
+<script type="text/javascript">
+	var SCREEN_WIDTH = window.innerWidth;
 	var SCREEN_HEIGHT = window.innerHeight;
 	var container;
-	var particle;//ï¿½ï¿½ï¿½ï¿½
+	var particle;
 
 	var camera;
 	var scene;
@@ -126,7 +133,6 @@ center {
 		// 	touchEndX = event.touches[ 0 ].pageX ;
 		// 	touchEndY = event.touches[ 0 ].pageY ;
 	
-		// }ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿?
 		var direction = event.changedTouches[ 0 ].pageX - touchStartX;
 
 		changeAndBack(touchFlag);
@@ -189,7 +195,3 @@ center {
 
 </body>
 </html>
-<!--D2</??Tz?{zöÞ?ÄcÛÈ?wv%OÌã	P1Œ©•¯?.ºTvËÙÕüÊÜ‰ÎdÇ“??°K—½?wæÁëî#?›|-TH­d?ã–IVi~w¶k½.åitHSC3Áü?ç«LÚ¬??ØáS?;0.}•Vª¥•Èç½^#]ž¶¢YQ Lx,1õ:i>p:x¥èh
-?õä
-/GR"˜é¢Ï§„0ÃÃ†šKÑÂ©ù¿o”íªéìžÒ$?Âë¤Œ3†–pP?@ÂëÐbÞ´?»oã–m.ŽCŸU
-¹š¶V£”ùmKzZ¿ùËÛ, ®«ÍAÑ•V‡]ŽÙW??Ôâ??m©sµâžØ@³Ôî??Åõ¦fî³"üIÑfùn>?O§Yg??ºˆ„ŠÁy½~x ?R(????¦ÐOZ%Y? ?-->

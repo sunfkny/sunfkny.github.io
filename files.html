@@ -17,7 +17,7 @@
 
   <header class="mdui-appbar mdui-appbar-fixed">
     <div class="mdui-toolbar mdui-color-theme">
-      <span class="mdui-btn mdui-btn-icon mdui-ripple" onClick="javascript :history.back(-1);"><i
+      <span class="mdui-btn mdui-btn-icon mdui-ripple" onClick="window.location='index.html'"><i
           class="mdui-icon material-icons">&#xe5c4;</i></span>
       <a class="mdui-typo-title">文件下载</a>
       <div class="mdui-toolbar-spacer"></div>
@@ -25,18 +25,23 @@
   </header>
 
 
-  <div class="mdui-container doc-container mdui-m-t-2" align="center">
+  <div class="mdui-container doc-container mdui-m-y-2">
 
-    <div class="mdui-container-fluid mdui-p-b-2 mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4" align="center">
-      <a class="mdui-container mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme" href="./files/class.zip">课堂狂欢器</a>
+    <div class="mdui-list ">
+      <a href="./files/class.zip" class="mdui-list-item mdui-ripple"><i
+          class="mdui-icon mdui-list-item-icon material-icons">&#xe24d;</i>
+        <div class="mdui-list-item-content">课堂狂欢器</div>
+      </a>
+      <a href="./files/kill.zip" class="mdui-list-item mdui-ripple"><i
+        class="mdui-icon mdui-list-item-icon material-icons">&#xe24d;</i>
+      <div class="mdui-list-item-content">极域杀手</div>
+    </a>
     </div>
-    <div class="mdui-container-fluid mdui-p-b-2 mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4" align="center">
-      <a class="mdui-container mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme" href="./files/kill.zip">极域杀手</a>
-    </div>
+
 
   </div>
 
-  <div class="mdui-container" align="center">
+  <div class="mdui-container mdui-m-y-1" align="center">
     <a href="https://github.com/sunfkny/sunfkny.github.io" target="_blank"
       class="mdui-text-color-black-secondary">Powerd by github.com</a>
   </div>
