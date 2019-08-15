@@ -6,7 +6,7 @@
 <title>funny</title>
 
 <style type="text/css">
-body { margin: 0; padding: 0; position: relative; background-image: url(images/xh.jpg); background-position: center; /*background-repeat: no-repeat;*/ width: 100%; height: 100%; background-size: 100% 100%; }
+body { margin: 0; padding: 0; position: relative;  /*background-repeat: no-repeat;*/ width: 100%; height: 100%; background-size: 100% 100%; }
 
 #jk {
     width: 30%;
@@ -29,13 +29,6 @@ center {
 <script type="text/javascript" src="js/Snow.js"></script>
 
 <script type="text/javascript">
-
-window.onresize = function(){
-	location.reload();
-}
-</script>
-
-<script type="text/javascript">
 	var SCREEN_WIDTH = window.innerWidth;
 	var SCREEN_HEIGHT = window.innerHeight;
 	var container;
@@ -56,7 +49,7 @@ window.onresize = function(){
 
 	function init() {
 		//alert("message3");
-		container = document.createElement('div');//container������ʵ��;
+		container = document.createElement('div');
 		document.body.appendChild(container);
 
 		camera = new THREE.PerspectiveCamera( 60, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 10000 );
@@ -97,8 +90,8 @@ window.onresize = function(){
 	}
 
 	var touchStartX;
-	var touchFlag = 0;//���浱ǰ�Ƿ񻬶���״̬;
-	var touchSensitive = 80;//��⻬���������;
+	var touchFlag = 0;
+	var touchSensitive = 80;
 	//var touchStartY;
 	//var touchEndX;
 	//var touchEndY;
@@ -106,7 +99,7 @@ window.onresize = function(){
 
 		if ( event.touches.length == 1 ) {
 
-			//event.preventDefault();//ȡ��Ĭ�Ϲ�������;
+			//event.preventDefault();
 			touchStartX = 0;
 			touchStartX = event.touches[ 0 ].pageX ;
 			//touchStartY = event.touches[ 0 ].pageY ;
@@ -189,8 +182,14 @@ window.onresize = function(){
 
 		renderer.render( scene, camera );
 	}
-</script>
 
+	window.onresize = function(){
+	SCREEN_WIDTH = window.innerWidth;
+	SCREEN_HEIGHT = window.innerHeight;
+	camera = new THREE.PerspectiveCamera( 60, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 10000 );
+	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+	}
+</script>
 
 
 </body>
