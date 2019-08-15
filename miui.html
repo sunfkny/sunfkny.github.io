@@ -73,85 +73,80 @@
   </div>
 
 
-  <div class="mdui-container doc-container">
+  <div class="doc-container">
+
 
     <!--input-->
-    <div class="mdui-textfield mdui-textfield-floating-label mdui-container">
-      <label class="mdui-textfield-label">
-        文件名
-      </label>
-      <input type="text" id="input" oninput="inputing(event)" onchange="inputing(event)" style="float:left; width:100%" class="mdui-textfield-input" />
-    </div>
-
-
-    <!--server choose-->
     <div class="mdui-container">
-      <div class="">
-        <form id="form1">
-          <div class="mdui-textfield">下载服务器：</div>
-          <label class="mdui-radio">
-            <input type="radio" value="bigota" name="group1" onclick="serverClick()" checked />
-            <i class="mdui-radio-icon"></i>
-            bigota
-          </label>
-          &nbsp;&nbsp;
-          <label class="mdui-radio">
-            <input type="radio" value="hugeota" name="group1" onclick="serverClick()" />
-            <i class="mdui-radio-icon"></i>
-            hugeota
-          </label>
-        </form>
+      <div class="mdui-textfield mdui-container mdui-col mdui-col-md-6 mdui-col-sm-8 mdui-col-xs-12">
+        <input class="mdui-textfield-input" type="text" placeholder="文件名" id="input" oninput="inputing(event)" onchange="inputing(event)" />
       </div>
     </div>
 
-    <!--information-->
+
+    <!--server choose start-->
+    <div class="mdui-container">
+      <form id="form1">
+        <div class="mdui-textfield">下载服务器：</div>
+        <div class="mdui-p-l-1">
+          <label class="mdui-radio mdui-col mdui-col-md-2 mdui-col-sm-4 mdui-col-xs-6">
+            <input type="radio" value="bigota" name="group1" onclick="serverClick()" checked />
+            <i class="mdui-radio-icon"></i>
+            <a class="mdui-p-l-2">bigota</a>
+          </label></div>
+        <div class="mdui-p-l-1">
+          <label class="mdui-radio mdui-col mdui-col-md-2 mdui-col-sm-4 mdui-col-xs-6">
+            <input type="radio" value="hugeota" name="group1" onclick="serverClick()" />
+            <i class="mdui-radio-icon"></i>
+            <a class="mdui-p-l-2">hugeota</a>
+          </label></div>
+      </form>
+    </div>
+    <!--server choose over-->
+
+    <!--output start-->
     <div id="output">
+
+
+      <!-- information -->
       <div class="mdui-container">
-        <div class="">
-
-          <ul class="mdui-list">
-            <li class="mdui-list-item mdui-ripple mdui-col-md-2 mdui-col-sm-1">
-              <div class="mdui-list-item-content"><i class="mdui-list-item-icon mdui-icon material-icons">&#xe324;</i>
-              </div>
-              <a class="mdui-list-item-content" id="devices"></a>
-            </li>
-            <li class="mdui-list-item mdui-ripple mdui-col-md-2 mdui-col-sm-1">
-              <div class="mdui-list-item-content"><i class="mdui-list-item-icon mdui-icon material-icons">&#xe1b0;</i>
-              </div>
-              <div class="mdui-list-item-content"><a id="version"></a></div>
-            </li>
-          </ul>
-
-        </div>
+        <div class="mdui-ripple mdui-textfield mdui-col mdui-col-md-2 mdui-col-sm-4 mdui-col-xs-6">机型：<a class="mdui-list-item-content" id="devices"></a></div>
+        <div class="mdui-ripple mdui-textfield mdui-col mdui-col-md-2 mdui-col-sm-4 mdui-col-xs-6">版本：<a class="mdui-list-item-content" id="version"></a></div>
       </div>
 
 
       <!--button-->
       <div class="mdui-container">
-        <div class="mdui-col mdui-p-y-1 mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4">
+        <div class="mdui-m-y-1 mdui-col mdui-col-md-2 mdui-col-sm-4 mdui-col-xs-12">
           <button onclick="copy()" class="btn mdui-btn-block mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme">
             复制
           </button>
         </div>
-        <div class="mdui-col mdui-p-y-1 mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4">
+        <div class="mdui-col mdui-m-y-1 mdui-col-md-2 mdui-col-sm-4 mdui-col-xs-12">
           <button onclick="download()" class="mdui-btn-block mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme">
             下载
           </button>
         </div>
-
       </div>
 
 
-      <div class="mdui-container mdui-m-y-1" align="center">
-        <a href="https://github.com/sunfkny/sunfkny.github.io" target="_blank" class="mdui-text-color-black-secondary">Powerd by github.com</a>
-      </div>
+    </div>
+    <!--output over-->
 
+    <div class="mdui-container mdui-textfield mdui-container mdui-col mdui-col-md-6 mdui-col-sm-8 mdui-col-xs-12" align="center">
+      <a href="https://github.com/sunfkny/sunfkny.github.io" target="_blank" class="mdui-text-color-black-secondary">Powerd by github.com</a>
     </div>
 
   </div>
 
 
+
+
 </body>
+
+
+
+
 
 <script type="text/javascript">
 
@@ -211,6 +206,9 @@
 
     }
   }
+
+  document.getElementById("input").value = "miui_MIMIX2S_9.3.18_883a2b5345_9.0.zip";
+  inputing();
 
 </script>
 
