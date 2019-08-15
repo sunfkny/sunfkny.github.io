@@ -16,20 +16,20 @@
 
   <header class="mdui-appbar mdui-appbar-fixed" mdui-headroom="options">
     <div class="mdui-toolbar mdui-color-theme">
-      <span id="toggle" mdui-drawer="{target: '#drawer', swipe: true}" class="mdui-btn mdui-btn-icon mdui-ripple"><i
-          class="mdui-icon material-icons">menu</i></span>
+      <span id="toggle" mdui-drawer="{target: '#drawer', swipe: true}" class="mdui-btn mdui-btn-icon mdui-ripple"><i class="mdui-icon material-icons">menu</i></span>
       <a class="mdui-typo-title" href="../">首页</a>
-      <div class="mdui-toolbar-spacer"></div>    <div class="">
-          <a class="mdui-btn mdui-btn-icon" mdui-menu="{target: '#menu'}"><i class="mdui-icon material-icons">&#xe5d4;</i></a>
-          <ul class="mdui-menu" id="menu">
-            <li class="mdui-menu-item">
-              <a href="javascript:location.reload();" class="mdui-ripple">刷新</a>
-              <a href="index.html" class="mdui-ripple">首页</a>
-              <a mdui-drawer="{target: '#drawer', swipe: true}" class="mdui-ripple">菜单</a>
-            </li>
-          </ul>
-        </div>
-    
+      <div class="mdui-toolbar-spacer"></div>
+      <div class="">
+        <a class="mdui-btn mdui-btn-icon" mdui-menu="{target: '#menu'}"><i class="mdui-icon material-icons">&#xe5d4;</i></a>
+        <ul class="mdui-menu" id="menu">
+          <li class="mdui-menu-item">
+            <a href="javascript:location.reload();" class="mdui-ripple">刷新</a>
+            <a href="index.html" class="mdui-ripple">首页</a>
+            <a mdui-drawer="{target: '#drawer', swipe: true}" class="mdui-ripple">菜单</a>
+          </li>
+        </ul>
+      </div>
+
     </div>
   </header>
 
@@ -75,6 +75,17 @@
 
     <div class="mdui-row-xs-1 mdui-row-sm-2 mdui-row-md-3 mdui-row-lg-4 mdui-grid-list">
 
+      <div class="mdui-col mdui-p-a-1" onclick="window.location='miui.html'">
+        <div class="mdui-grid-tile mdui-ripple mdui-btn-raised ">
+          <!-- <a href="javascript:;"><img src="./pictures/card-miui.png" /></a> -->
+          <a href="javascript:;"><img src="https://i.loli.net/2019/08/15/zUKSHroIie4bYl6.png" /></a>
+          <div class="mdui-grid-tile-actions">
+            <div class="mdui-grid-tile-text">
+              <div class="mdui-grid-tile-title">根据文件名获取MIUI下载地址</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="mdui-col mdui-p-a-1">
         <div class="mdui-grid-tile mdui-ripple mdui-btn-raised ">
@@ -99,17 +110,7 @@
           </div>
         </div>
       </div>
-      <div class="mdui-col mdui-p-a-1" onclick="window.location='miui.html'">
-        <div class="mdui-grid-tile mdui-ripple mdui-btn-raised ">
-          <!-- <a href="javascript:;"><img src="./pictures/card-miui.png" /></a> -->
-          <a href="javascript:;"><img src="https://i.loli.net/2019/08/15/zUKSHroIie4bYl6.png" /></a>
-          <div class="mdui-grid-tile-actions">
-            <div class="mdui-grid-tile-text">
-              <div class="mdui-grid-tile-title">根据文件名获取MIUI下载地址</div>
-            </div>
-          </div>
-        </div>
-      </div>
+
       <div class="mdui-col mdui-p-a-1">
         <div class="mdui-grid-tile mdui-ripple mdui-btn-raised ">
           <!-- <a href="documents.html"><img src="./pictures/card-documents.png" /></a> -->
@@ -124,14 +125,12 @@
 
     </div>
 
-
   </div>
 
 
 
   <div class="mdui-container mdui-m-y-2" align="center">
-    <a href="https://github.com/sunfkny/sunfkny.github.io" target="_blank"
-      class="mdui-text-color-black-secondary">Powerd by github.com</a>
+    <a href="https://github.com/sunfkny/sunfkny.github.io" target="_blank" class="mdui-text-color-black-secondary">Powerd by github.com</a>
   </div>
 
 </body>
