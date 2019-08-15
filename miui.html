@@ -16,13 +16,13 @@
   <meta name="theme-color" content="#de698c">
 </head>
 
-<body class="mdui-theme-primary-indigo mdui-theme-accent-pink">
+<body class="mdui-theme-primary-indigo mdui-theme-accent-pink mdui-drawer-body-left">
 
 
   <!--toolbar-->
   <header class="mdui-appbar mdui-appbar-fixed">
     <div class="mdui-toolbar mdui-color-theme">
-      <span class="mdui-btn mdui-btn-icon mdui-ripple" onClick="javascript :history.back(-1);"><i
+      <span class="mdui-btn mdui-btn-icon mdui-ripple" onClick="window.history.go(-1)"><i
           class="mdui-icon material-icons">&#xe5c4;</i></span>
       <a class="mdui-typo-title">MIUI下载地址</a>
       <div class="mdui-toolbar-spacer"></div>
@@ -30,6 +30,36 @@
   </header>
 
 
+  <div class="mdui-drawer" id="drawer">
+    <ul class="mdui-list">
+      <li class="mdui-list-item mdui-ripple" onclick="window.location='index.html'">
+        <i class="mdui-list-item-icon mdui-icon material-icons">&#xe88a;</i>
+        <a class="mdui-list-item-content">首页</a>
+      </li>
+      <li class="mdui-list-item mdui-ripple" onclick="window.location='documents.html'">
+        <i class="mdui-list-item-icon mdui-icon material-icons">&#xe168;</i>
+        <a class="mdui-list-item-content">文章归档</a>
+      </li>
+      <li class="mdui-list-item mdui-ripple" onclick="window.location='tools.html'">
+        <i class="mdui-list-item-icon mdui-icon material-icons">&#xe838;</i>
+        <a class="mdui-list-item-content">在线工具</a>
+      </li>
+      <li class="mdui-list-item mdui-ripple" onclick="window.location='files.html'">
+        <i class="mdui-list-item-icon mdui-icon material-icons">&#xe24d;</i>
+        <a class="mdui-list-item-content">文件下载</a>
+      </li>
+      <li class="mdui-list-item mdui-ripple" onclick="window.location='links.html'">
+        <i class="mdui-list-item-icon mdui-icon material-icons">&#xe2bc;</i>
+        <a class="mdui-list-item-content">其他链接</a>
+      </li>
+      <li class="mdui-subheader">关于我</li>
+      <li class="mdui-list-item mdui-ripple" onclick="window.location='http://www.coolapk.com/u/529173'">
+        <i class="mdui-list-item-icon mdui-icon material-icons">&#xe853;</i>
+        <div class="mdui-list-item-content">酷安</div>
+      </li>
+    </ul>
+
+  </div>
 
   <!--input-->
   <div class="mdui-textfield mdui-textfield-floating-label mdui-container" style="margin-top: 64px">
@@ -64,40 +94,42 @@
 
   <!--information-->
   <div id="output">
-  <div class="mdui-container">
-    <div class="mdui-textfield">
+    <div class="mdui-container">
+      <div class="mdui-textfield">
 
 
-      <ul class="mdui-list">
-        <li class="mdui-list-item mdui-ripple mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4">
-          <div class="mdui-list-item-content"><i class="mdui-list-item-icon mdui-icon material-icons">&#xe324;</i></div>
-          <div class="mdui-list-item-content"><a id="devices"></a></div>
-        </li>
-        <li class="mdui-list-item mdui-ripple mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4">
-          <div class="mdui-list-item-content"><i class="mdui-list-item-icon mdui-icon material-icons">&#xe1b0;</i></div>
-          <div class="mdui-list-item-content"><a id="version"></div>
-        </li>
-      </ul>
+        <ul class="mdui-list">
+          <li class="mdui-list-item mdui-ripple mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4">
+            <div class="mdui-list-item-content"><i class="mdui-list-item-icon mdui-icon material-icons">&#xe324;</i>
+            </div>
+            <div class="mdui-list-item-content"><a id="devices"></a></div>
+          </li>
+          <li class="mdui-list-item mdui-ripple mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4">
+            <div class="mdui-list-item-content"><i class="mdui-list-item-icon mdui-icon material-icons">&#xe1b0;</i>
+            </div>
+            <div class="mdui-list-item-content"><a id="version"></div>
+          </li>
+        </ul>
+      </div>
     </div>
+
+
+    <!--button-->
+    <div class="mdui-container mdui-p-y-1">
+      <div class="mdui-col mdui-p-y-1 mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4">
+        <button onclick="copy()" class="btn mdui-btn-block mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme">
+          复制
+        </button>
+      </div>
+      <div class="mdui-col mdui-p-y-1 mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4">
+        <button onclick="download()" class="mdui-btn-block mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme">
+          下载
+        </button>
+      </div>
+
+    </div>
+
   </div>
-
-
-  <!--button-->
-  <div class="mdui-container mdui-p-y-1">
-    <div class="mdui-col mdui-p-y-1 mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4">
-      <button onclick="copy()" class="btn mdui-btn-block mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme">
-        复制
-      </button>
-    </div>
-    <div class="mdui-col mdui-p-y-1 mdui-col-lg-2 mdui-col-md-3 mdui-col-sm-4">
-      <button onclick="download()" class="mdui-btn-block mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme">
-        下载
-      </button>
-    </div>
-
-  </div>
-
-</div>
 
   <div class="mdui-container mdui-m-y-1" align="center">
     <a href="https://github.com/sunfkny/sunfkny.github.io" target="_blank"
