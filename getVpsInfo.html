@@ -86,12 +86,12 @@
     <script>
     var clipboard = new ClipboardJS('.btn');
     clipboard.on('success', function(e) {
-        //console.log(e);
-        alert("Copy success:"+e.toString());
+        console.log(e);
+        alert("Copy success:");
     });
     clipboard.on('error', function(e) {
-        //console.log(e);
-        alert("Copy error:"+e.toString());
+        console.log(e);
+        alert("Copy error:");
     });
     </script>
 
