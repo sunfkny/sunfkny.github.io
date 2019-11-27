@@ -5,7 +5,16 @@
     <meta charset="utf-8">
     <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
     <script>
-        window.onload = function () {new Clipboard('.btn'); loadXMLDoc(); }
+    var clipboard = new ClipboardJS('.btn');
+    clipboard.on('success', function(e) {
+        console.log(e);
+    });
+    clipboard.on('error', function(e) {
+        console.log(e);
+    });
+    </script>
+    <script>
+        window.onload = function () { loadXMLDoc(); }
         function tsToTime(time = +new Date()) { // from:https://segmentfault.com/a/1190000015992232
             var date = new Date(time + 8 * 3600 * 1000);
             return date.toJSON().substr(0, 19).replace('T', ' ');
@@ -66,8 +75,8 @@
         <textarea id="bar">Mussum ipsum cacilds...</textarea>
         
         <!-- Trigger -->
-        <button class="btn" data-clipboard-action="cut" data-clipboard-target="#bar">
-            Cut to clipboard
+        <button class="btn" data-clipboard-target="#bar">
+            Copy to clipboard
         </button>
 
     </div>
