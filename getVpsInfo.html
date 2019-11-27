@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
         window.onload = function () { loadXMLDoc(); }
         function tsToTime(time = +new Date()) { // from:https://segmentfault.com/a/1190000015992232
@@ -85,10 +86,12 @@
     <script>
     var clipboard = new ClipboardJS('.btn');
     clipboard.on('success', function(e) {
-        console.log(e);
+        //console.log(e);
+        alert("Copy success:"+e);
     });
     clipboard.on('error', function(e) {
-        console.log(e);
+        //console.log(e);
+        alert("Copy error:"+e);
     });
     </script>
 
