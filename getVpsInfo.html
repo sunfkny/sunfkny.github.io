@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
     <script>
-        window.onload = function () { loadXMLDoc(); }
+        window.onload = function () {new Clipboard('.btn'); loadXMLDoc(); }
         function tsToTime(time = +new Date()) { // from:https://segmentfault.com/a/1190000015992232
             var date = new Date(time + 8 * 3600 * 1000);
             return date.toJSON().substr(0, 19).replace('T', ' ');
@@ -64,7 +64,7 @@
         <a id="myTipText"></a>
 
         <textarea id="bar">Mussum ipsum cacilds...</textarea>
-        <pre>new Clipboard('.btn');</pre>
+        
         <!-- Trigger -->
         <button class="btn" data-clipboard-action="cut" data-clipboard-target="#bar">
             Cut to clipboard
