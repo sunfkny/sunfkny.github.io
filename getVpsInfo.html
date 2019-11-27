@@ -3,16 +3,6 @@
 
 <head>
     <meta charset="utf-8">
-    <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
-    <script>
-    var clipboard = new ClipboardJS('.btn');
-    clipboard.on('success', function(e) {
-        console.log(e);
-    });
-    clipboard.on('error', function(e) {
-        console.log(e);
-    });
-    </script>
     <script>
         window.onload = function () { loadXMLDoc(); }
         function tsToTime(time = +new Date()) { // from:https://segmentfault.com/a/1190000015992232
@@ -90,7 +80,17 @@
             <th>password</th>
         </tr>
     </table>
-
+    
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+    <script>
+    var clipboard = new ClipboardJS('.btn');
+    clipboard.on('success', function(e) {
+        console.log(e);
+    });
+    clipboard.on('error', function(e) {
+        console.log(e);
+    });
+    </script>
 
 </body>
 
