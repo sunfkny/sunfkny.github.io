@@ -87,11 +87,11 @@
     var clipboard = new ClipboardJS('.btn');
     clipboard.on('success', function(e) {
         //console.log(e);
-        alert("Copy success:"+e);
+        alert("Copy success:"+e.toString());
     });
     clipboard.on('error', function(e) {
         //console.log(e);
-        alert("Copy error:"+e);
+        alert("Copy error:"+e.toString());
     });
     </script>
 
