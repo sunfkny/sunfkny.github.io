@@ -1,0 +1,10 @@
+[
+{
+    "name":"baidu",
+    "rule":"https://www.baidu.com/s?wd=%s"
+},
+{
+    "name":"dogedoge",
+    "rule":"https://www.dogedoge.com/results?q=%s"
+}
+]
