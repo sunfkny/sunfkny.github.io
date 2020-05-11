@@ -1,7 +1,7 @@
 ```js
 (function () {
     var hm = document.createElement("script");
-    hm.src = "外部答.js";
+    hm.src = "";
     var s = document.getElementsByTagName("script")[0];
     s.parentNode.insertBefore(hm, s);
 })();
