@@ -44,7 +44,7 @@
         height: var(--width);
         overflow-x: scroll; /* 显示横向滚动条 */
         overflow-y: hidden;
-        white-space: nowrap; /* 不换行 */ 
+        white-space: nowrap; /* 不换行 */
       }
       #imgs {
         font-size: 0; /* 去除行间空白 */
@@ -63,7 +63,8 @@
     <script>
       var select = document.getElementById("select");
       var imgs = document.getElementById("imgs");
-      var id = null
+      var id = null;
+      var show_draft = false;
 
       function load_set(id) {
         imgs.innerHTML = "";
@@ -72,9 +73,16 @@
         });
         if (emoticon_set) {
           document.title = emoticon_set.name;
-          var dom = ""
+          var dom = "";
           emoticon_set.list.forEach(function (emoticon) {
-            dom += `<img loading="lazy" title="${emoticon.name}" src="${emoticon.icon}">`;
+            if (
+              (show_draft || emoticon.status == "published") &&
+              emoticon.icon
+            ) {
+              dom += `<img loading="lazy" title="${emoticon.name}" src="${emoticon.icon}">`;
+            } else {
+              console.log("not published emoticon", emoticon);
+            }
           });
           imgs.innerHTML = dom;
         }
@@ -90,13 +98,18 @@
         })
         .then(function (data) {
           var list = data.data.list;
-          var dom = ""
+          var dom = "";
           list.forEach(function (emoticon_set) {
-            if (emoticon_set.status != "draft") {
+            if (
+              (show_draft || emoticon_set.status == "published") &&
+              emoticon_set.icon
+            ) {
               if (id == null) {
                 id = emoticon_set.id;
               }
               dom += `<img loading="lazy" onclick="img_view(this)" id="${emoticon_set.id}" title="${emoticon_set.name}" src="${emoticon_set.icon}">`;
+            } else {
+              console.log("not published emoticon_set", emoticon_set);
             }
           });
           select.innerHTML = dom;
