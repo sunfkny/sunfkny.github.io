@@ -48,24 +48,24 @@
     }
 
     :root {
-      --width: 20%;
+      --width: 20vw;
     }
 
     #select {
       width: 100%;
+      /* 去除行间空白 */
       font-size: 0;
-      height: var(--width);
       overflow-x: scroll;
       /* 显示横向滚动条 */
       overflow-y: hidden;
-      white-space: nowrap;
       /* 不换行 */
+      white-space: nowrap;
     }
 
     #imgs>img,
     #select>img {
-      font-size: 0;
       /* 去除行间空白 */
+      font-size: 0;
       width: var(--width);
       height: var(--width);
       transition: 0.3s;
@@ -73,25 +73,25 @@
 
     @media screen and (min-width: 720px) {
       :root {
-        --width: 10%;
+        --width: 10vw;
       }
     }
 
     @media screen and (min-width: 1440px) {
       :root {
-        --width: 6.666%;
+        --width: 6.666vw;
       }
     }
 
     @media screen and (min-width: 2160px) {
       :root {
-        --width: 5%;
+        --width: 5vw;
       }
     }
 
     @media screen and (min-width: 2880px) {
       :root {
-        --width: 4%;
+        --width: 4vw;
       }
     }
   </style>
