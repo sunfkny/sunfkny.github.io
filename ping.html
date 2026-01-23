@@ -1,0 +1,3515 @@
+<!-- # Copied from https://github.com/xx2468171796/networkping -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+    <head>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>实时网页连通性延迟检测</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 日期适配器：解决 Chart.js time 轴报错 -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    <!-- html2canvas 用于截图导出 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        body {
+            background-color: #f9fafb;
+            color: #374151;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+            flex-shrink: 0;
+            position: relative;
+            top: 0;
+        }
+
+        .status-online {
+            background-color: #10b981;
+        }
+
+        .status-offline {
+            background-color: #ef4444;
+        }
+
+        .status-checking {
+            background-color: #f59e0b;
+            animation: pulse 2s infinite;
+        }
+
+        /* 目标选择器样式 */
+        .target-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        /* 可折叠分组显示样式 */
+        .group-container {
+            margin-bottom: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .group-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .group-header:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+
+        .group-header .arrow {
+            margin-right: 8px;
+            transition: transform 0.2s ease;
+            font-size: 12px;
+        }
+
+        .group-header.collapsed .arrow {
+            transform: rotate(-90deg);
+        }
+
+        .group-content {
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 16px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .group-content.collapsed {
+            max-height: 0;
+            padding: 0 16px;
+            opacity: 0;
+        }
+
+        .group-targets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .group-stats {
+            margin-left: auto;
+            font-size: 12px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* 目标卡片样式优化 */
+        .target-card {
+            display: flex;
+            align-items: center;
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 13px;
+        }
+
+        .target-card:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .target-card.selected {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+
+        .target-card.selected:hover {
+            background: #bfdbfe;
+        }
+
+        .target-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .target-checkbox:hover {
+            background-color: #f3f4f6;
+        }
+
+        .target-checkbox.selected {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+        }
+
+        /* 离线统计样式 */
+        .offline-stats {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* 模态框缩放适配 */
+        .modal-content {
+            position: relative;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+
+        .modal-content button {
+            position: relative;
+            z-index: 1001;
+            pointer-events: auto;
+        }
+
+        /* 确保模态框在各种缩放下都能正常工作 */
+        #customUrlModal {
+            z-index: 9999 !important;
+        }
+
+        #customModalContent {
+            z-index: 10000 !important;
+            pointer-events: auto;
+        }
+
+        /* 修复按钮在缩放时的点击问题 */
+        #confirmCustomUrl,
+        #cancelCustomUrl,
+        #closeCustomModal,
+        #confirmImport,
+        #cancelImport,
+        #closeImportModal {
+            position: relative;
+            z-index: 10001 !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        }
+
+        /* 导入配置模态框的z-index修复 */
+        #importConfigModal {
+            z-index: 9999 !important;
+        }
+
+        #importModalContent {
+            z-index: 10000 !important;
+            pointer-events: auto;
+        }
+
+        /* 防止缩放时模态框内容被截断或无法点击 */
+        .modal-container {
+            transform-origin: center center;
+            will-change: transform;
+        }
+
+        /* 确保模态框按钮区域在各种缩放下都可点击 */
+        .modal-footer {
+            position: relative;
+            z-index: 10002;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        /* 修复浏览器缩放时的交互问题 */
+        @media screen and (min-resolution: 120dpi) {
+            .modal-content {
+                transform: scale(1);
+                transform-origin: center center;
+            }
+
+            .modal-content button {
+                min-height: 40px;
+                min-width: 80px;
+            }
+        }
+
+        /* 手机端适配样式 */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .max-w-7xl {
+                max-width: 100%;
+            }
+
+            /* 标题适配 */
+            h1 {
+                font-size: 1.5rem !important;
+                line-height: 2rem !important;
+            }
+
+            /* 控制面板适配 */
+            .control-panel {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .control-panel>div {
+                flex-direction: column;
+                gap: 12px;
+                min-width: max-content;
+            }
+
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .control-group label {
+                font-size: 14px;
+                margin-bottom: 4px;
+            }
+
+            .control-group select,
+            .control-group button {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            /* 目标选择器适配 */
+            .target-selector {
+                justify-content: center;
+            }
+
+            .target-checkbox {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            /* 表格适配 */
+            .table-container {
+                font-size: 12px;
+            }
+
+            .table-container th,
+            .table-container td {
+                padding: 8px 4px !important;
+                font-size: 11px !important;
+            }
+
+            .table-container .text-sm {
+                font-size: 10px !important;
+            }
+
+            .table-container .text-xs {
+                font-size: 9px !important;
+            }
+
+            /* 详细统计表格手机端隐藏部分列 */
+            .detailed-stats-mobile-hidden {
+                display: none;
+            }
+
+            /* 图表适配 */
+            #latencyChart {
+                height: 250px !important;
+            }
+
+            /* 模态框适配 */
+            .modal-content {
+                margin: 20px;
+                max-width: calc(100vw - 40px);
+            }
+
+            .modal-content .p-6 {
+                padding: 16px;
+            }
+
+            /* 卡片间距适配 */
+            .space-y-6>*+* {
+                margin-top: 16px;
+            }
+
+            .bg-white {
+                padding: 16px !important;
+            }
+        }
+
+        /* 平板端适配 */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .control-panel {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .control-group {
+                min-width: 200px;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center p-6">
+    <!-- 顶部标题 + 控制面板 -->
+    <header class="mb-6 w-full max-w-7xl text-center">
+        <h1 class="text-3xl font-bold mb-2">🌐 实时网页连通性延迟检测</h1>
+        <p class="text-gray-600 mb-4">实时监测网络延迟，支持历史数据查看和PNG导出</p>
+
+        <!-- 控制面板 -->
+        <div class="bg-white rounded-xl shadow p-4 mb-4">
+            <div class="control-panel overflow-x-auto">
+                <div class="flex items-center justify-center gap-4 mb-4 min-w-max px-2">
+                    <!-- 刷新间隔 -->
+                    <div class="flex items-center gap-2">
+                        <label for="intervalSelect" class="font-medium">刷新间隔:</label>
+                        <select id="intervalSelect"
+                            class="border rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="1000" selected>1 秒</option>
+                            <option value="5000">5 秒</option>
+                            <option value="10000">10 秒</option>
+                            <option value="30000">30 秒</option>
+                        </select>
+                    </div>
+
+                    <!-- 时间范围 -->
+                    <div class="flex items-center gap-2">
+                        <label for="timeRangeSelect" class="font-medium">时间范围:</label>
+                        <select id="timeRangeSelect"
+                            class="border rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="0.5">30 秒</option>
+                            <option value="1">1 分钟</option>
+                            <option value="5" selected>5 分钟</option>
+                            <option value="60">1 小时</option>
+                            <option value="180">3 小时</option>
+                            <option value="360">6 小时</option>
+                            <option value="720">12 小时</option>
+                            <option value="1440">24 小时</option>
+                        </select>
+                    </div>
+
+                    <!-- 导出按钮 -->
+                    <button id="exportBtn"
+                        class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                        📊 导出统计
+                    </button>
+
+                    <!-- 清除数据按钮 -->
+                    <button id="clearBtn"
+                        class="bg-gray-600 text-white px-4 py-1 rounded hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors">
+                        🗑️ 清除数据
+                    </button>
+
+                    <!-- 添加自定义网址按钮 -->
+                    <button id="addCustomBtn"
+                        class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors">
+                        ➕ 自定义网址
+                    </button>
+
+                    <!-- 导入配置按钮 -->
+                    <button id="importConfigBtn"
+                        class="bg-purple-600 text-white px-4 py-1 rounded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors">
+                        📥 导入配置
+                    </button>
+
+                    <!-- 导出配置按钮 -->
+                    <button id="exportConfigBtn"
+                        class="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
+                        📤 导出配置
+                    </button>
+                </div>
+            </div>
+
+            <!-- 智能分组筛选器 -->
+            <div class="border-t pt-4">
+                <div class="flex items-center justify-between mb-3">
+                    <label class="text-sm font-medium text-gray-700">监测目标管理</label>
+                    <div class="flex items-center space-x-3">
+                        <!-- 分组筛选下拉框 -->
+                        <div class="relative">
+                            <select id="groupFilterSelect"
+                                class="appearance-none bg-white border border-gray-300 rounded-md px-3 py-1 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">📁 全部分组</option>
+                                <option value="国外服务">🌍 国外服务</option>
+                                <option value="国内服务">🏠 国内服务</option>
+                                <option value="社交媒体">📱 社交媒体</option>
+                                <option value="技术社区">💻 技术社区</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- 显示模式切换 -->
+                        <div class="flex items-center space-x-1 bg-gray-100 rounded-md p-1">
+                            <button id="viewModeList"
+                                class="px-2 py-1 text-xs rounded bg-white shadow-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                📋 列表
+                            </button>
+                            <button id="viewModeGroup"
+                                class="px-2 py-1 text-xs rounded text-gray-500 hover:bg-white hover:shadow-sm transition-colors">
+                                📂 分组
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 目标选择器容器 -->
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div id="targetSelector" class="target-selector">
+                        <!-- 动态生成目标选择器 -->
+                    </div>
+                </div>
+
+                <!-- 分组统计信息 -->
+                <div id="groupStats" class="mt-2 text-xs text-gray-500 flex justify-between">
+                    <span id="selectedCount">已选择: 0 个目标</span>
+                    <span id="groupCount">共 0 个分组</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体内容区 -->
+    <div class="w-full max-w-7xl space-y-6">
+        <!-- 当前状态表格 -->
+        <div class="bg-white rounded-2xl shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">📋 当前状态</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200" id="status-table">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                目标</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                状态</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                当前延迟</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                延迟统计</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                在线统计</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                离线统计</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                上次检测</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="status-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 详细统计面板 -->
+        <div class="bg-white rounded-2xl shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">📊 详细统计数据</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200" id="detailedStatsTable">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th
+                                class="px-6 py-4 text-left text-base font-medium text-gray-500 uppercase tracking-wider">
+                                目标</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                最小延迟</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                最大延迟</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                平均延迟</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                总检测次数</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                成功次数</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                成功率</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                在线时长</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                在线率</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                离线次数</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                离线时长</th>
+                            <th
+                                class="px-6 py-4 text-center text-base font-medium text-gray-500 uppercase tracking-wider">
+                                离线详情</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="detailedStatsBody">
+                        <!-- 动态生成统计数据行 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 工具原理说明 -->
+        <div class="bg-white rounded-2xl shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">🔬 工具原理说明</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 延迟测试原理 -->
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        延迟测试原理
+                    </h3>
+                    <div class="text-sm text-blue-800 space-y-2">
+                        <p><strong>测试方法：</strong>HTTP请求响应时间测量</p>
+                        <p><strong>测试过程：</strong></p>
+                        <ol class="list-decimal list-inside ml-4 space-y-1">
+                            <li>使用JavaScript的Fetch API发送HTTP请求</li>
+                            <li>记录请求开始时间（performance.now()）</li>
+                            <li>等待服务器响应</li>
+                            <li>记录响应结束时间</li>
+                            <li>计算往返时间差值</li>
+                        </ol>
+                        <p><strong>测试内容：</strong>包含DNS解析、TCP连接、HTTP协议处理等完整网络访问时间</p>
+                        <p><strong>与ping的区别：</strong>ping测试的是ICMP协议的纯网络延迟，本工具测试的是实际网页访问延迟</p>
+                        <div class="mt-3 p-3 bg-blue-100 rounded-md">
+                            <p class="font-semibold text-blue-900 mb-2">💡 延迟差异说明</p>
+                            <div class="text-xs text-blue-800 space-y-1">
+                                <p><strong>ping延迟 (10ms)</strong> → 仅网络层连通性测试</p>
+                                <p><strong>HTTP延迟 (90ms)</strong> → 完整Web访问流程测试</p>
+                                <p class="text-blue-700">HTTP延迟通常比ping高3-10倍是正常现象</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 延迟对比说明 -->
+                <div class="bg-yellow-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-yellow-900 mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z">
+                            </path>
+                        </svg>
+                        延迟测试对比
+                    </h3>
+                    <div class="text-sm text-yellow-800 space-y-3">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-xs">
+                                <thead class="bg-yellow-100">
+                                    <tr>
+                                        <th class="px-2 py-1 text-left font-semibold">测试方法</th>
+                                        <th class="px-2 py-1 text-center font-semibold">协议</th>
+                                        <th class="px-2 py-1 text-center font-semibold">延迟范围</th>
+                                        <th class="px-2 py-1 text-center font-semibold">测试内容</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-t border-yellow-200">
+                                        <td class="px-2 py-1 font-medium">ping测试</td>
+                                        <td class="px-2 py-1 text-center">ICMP</td>
+                                        <td class="px-2 py-1 text-center">10-30ms</td>
+                                        <td class="px-2 py-1">网络层连通性</td>
+                                    </tr>
+                                    <tr class="border-t border-yellow-200">
+                                        <td class="px-2 py-1 font-medium">HTTP测试</td>
+                                        <td class="px-2 py-1 text-center">HTTP/HTTPS</td>
+                                        <td class="px-2 py-1 text-center">30-200ms</td>
+                                        <td class="px-2 py-1">完整Web访问流程</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-yellow-700 font-medium">
+                            ⚠️ HTTP延迟比ping延迟高3-10倍是正常现象，因为包含了DNS解析、TCP连接、HTTP处理等完整过程
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 数据统计说明 -->
+                <div class="bg-green-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-green-900 mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                            </path>
+                        </svg>
+                        数据统计说明
+                    </h3>
+                    <div class="text-sm text-green-800 space-y-2">
+                        <p><strong>延迟统计：</strong></p>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>最小延迟：监测期间记录的最快响应时间</li>
+                            <li>最大延迟：监测期间记录的最慢响应时间</li>
+                            <li>平均延迟：所有成功请求的平均响应时间</li>
+                        </ul>
+                        <p><strong>连接统计：</strong></p>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>总检测次数：发起的总请求数量</li>
+                            <li>成功次数：成功响应的请求数量</li>
+                            <li>成功率：成功请求占总请求的百分比</li>
+                        </ul>
+                        <p><strong>在线/离线统计：</strong>基于连续的成功/失败状态计算时长和次数</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 实时折线图 -->
+        <div class="bg-white rounded-2xl shadow p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">📈 实时延迟趋势图</h2>
+                <div class="text-sm text-gray-500" id="chartStatus">
+                    显示最近 <span id="currentTimeRange">5</span> 分钟数据
+                </div>
+            </div>
+            <div class="relative">
+                <canvas id="latencyChart" height="350"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 联系方式 -->
+    <div class="w-full max-w-7xl mt-8 mb-4">
+        <div class="bg-white rounded-2xl shadow p-6 text-center">
+            <h2 class="text-xl font-semibold mb-4">📞 联系我们</h2>
+            <p class="text-gray-600 mb-4">如有问题或建议，欢迎加入我们的电报群</p>
+            <a href="https://t.me/+RZMe7fnvvUg1OWJl" target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                </svg>
+                加入电报群
+            </a>
+        </div>
+    </div>
+
+    <!-- 导入配置模态框 -->
+    <div id="importConfigModal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="modal-content modal-container bg-white rounded-lg shadow-xl max-w-2xl w-full transform transition-all duration-300 scale-95 opacity-0"
+            id="importModalContent">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-900">导入自定义配置</h3>
+                <button id="closeImportModal" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            选择配置文件 (JSON格式)
+                        </label>
+                        <input type="file" id="configFileInput" accept=".json"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            或粘贴配置JSON
+                        </label>
+                        <textarea id="configTextInput" rows="8"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder='[{"name":"示例网站","testUrls":["https://example.com/favicon.ico"],"color":"rgb(255,0,0)","enabled":true}]'></textarea>
+                    </div>
+
+                    <div id="importError" class="hidden p-3 bg-red-50 border border-red-200 rounded-md">
+                        <div class="flex">
+                            <svg class="w-5 h-5 text-red-400 mr-2 flex-shrink-0" fill="currentColor"
+                                viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <div class="text-sm text-red-700" id="importErrorMessage"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                <button id="cancelImport"
+                    class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors">
+                    取消
+                </button>
+                <button id="confirmImport"
+                    class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors">
+                    导入配置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自定义网址管理模态框 -->
+    <div id="customUrlModal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="modal-content modal-container bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] transform transition-all duration-300 scale-95 opacity-0 flex flex-col"
+            id="customModalContent">
+
+            <!-- 模态框头部 -->
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
+                <h3 class="text-lg font-semibold text-gray-900">自定义监测网址管理</h3>
+                <button id="closeCustomModal" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 标签页导航 -->
+            <div class="px-6 py-2 border-b border-gray-200 flex-shrink-0">
+                <div class="flex space-x-1">
+                    <button id="singleAddTab"
+                        class="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md border-b-2 border-blue-600">
+                        单个添加
+                    </button>
+                    <button id="batchManageTab"
+                        class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-md">
+                        批量管理
+                    </button>
+                    <button id="tableImportTab"
+                        class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-md">
+                        表格导入
+                    </button>
+                </div>
+            </div>
+
+            <!-- 可滚动内容区域 -->
+            <div class="flex-1 overflow-y-auto">
+
+                <!-- 单个添加标签页 -->
+                <div id="singleAddContent" class="p-6">
+                    <!-- 添加监测按钮 - 移到测试网址上面 -->
+                    <div class="mb-6 flex justify-center">
+                        <button id="confirmCustomUrl"
+                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium">
+                            ✅ 添加监测
+                        </button>
+                    </div>
+
+                    <form id="customUrlForm" class="space-y-4">
+                        <div>
+                            <label for="customName" class="block text-sm font-medium text-gray-700 mb-2">
+                                网站名称 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="customName"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="例如：我的网站" required>
+                            <p class="text-xs text-gray-500 mt-1">为这个监测目标设置一个易识别的名称</p>
+                        </div>
+
+                        <div>
+                            <label for="customUrl" class="block text-sm font-medium text-gray-700 mb-2">
+                                测试网址 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="url" id="customUrl"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="https://example.com/favicon.ico" required>
+                            <p class="text-xs text-gray-500 mt-1">输入要监测的完整网址，建议使用轻量级资源</p>
+                        </div>
+
+                        <div>
+                            <label for="customColor" class="block text-sm font-medium text-gray-700 mb-2">
+                                图表颜色
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <input type="color" id="customColor" value="#8b5cf6"
+                                    class="w-12 h-10 border border-gray-300 rounded cursor-pointer">
+                                <span class="text-sm text-gray-600">选择在图表中显示的颜色</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="customGroup" class="block text-sm font-medium text-gray-700 mb-2">
+                                分组 <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex space-x-2">
+                                <select id="customGroup"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">选择分组</option>
+                                    <option value="国外服务">国外服务</option>
+                                    <option value="国内服务">国内服务</option>
+                                    <option value="社交媒体">社交媒体</option>
+                                    <option value="技术社区">技术社区</option>
+                                    <option value="自定义">自定义</option>
+                                </select>
+                                <input type="text" id="customGroupInput" placeholder="输入新分组名称"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hidden">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">选择或创建一个分组来组织你的监测目标</p>
+                        </div>
+
+                        <!-- 使用帮助 -->
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-blue-900 mb-2">📖 使用帮助</h4>
+                            <div class="text-sm text-blue-800 space-y-2">
+                                <p><strong>支持的网址格式：</strong></p>
+                                <ul class="list-disc list-inside ml-4 space-y-1">
+                                    <li><code>https://example.com</code> - 完整HTTPS网址</li>
+                                    <li><code>http://example.com</code> - HTTP网址（不推荐）</li>
+                                    <li><code>https://example.com/path</code> - 带路径的网址</li>
+                                    <li><code>https://subdomain.example.com</code> - 子域名</li>
+                                </ul>
+                                <p><strong>推荐的测试端点：</strong></p>
+                                <ul class="list-disc list-inside ml-4 space-y-1">
+                                    <li><code>https://example.com/favicon.ico</code> - 网站图标（通常较小）</li>
+                                    <li><code>https://example.com/robots.txt</code> - 机器人文件（文本文件）</li>
+                                    <li><code>https://api.example.com/ping</code> - API ping端点</li>
+                                    <li><code>https://cdn.example.com/logo.png</code> - CDN资源</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 配置实例 -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h5 class="font-medium text-gray-900 mb-2">💡 配置实例</h5>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">网站名称:</span>
+                                    <span class="font-mono">GitHub</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">测试网址:</span>
+                                    <span class="font-mono">https://github.com/favicon.ico</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">图表颜色:</span>
+                                    <div class="w-4 h-4 bg-purple-500 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 表单验证提示 -->
+                        <div id="customFormError" class="hidden p-3 bg-red-50 border border-red-200 rounded-md">
+                            <div class="flex">
+                                <svg class="w-5 h-5 text-red-400 mr-2 flex-shrink-0" fill="currentColor"
+                                    viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                                <div class="text-sm text-red-700" id="customFormErrorMessage"></div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 批量管理标签页 -->
+                <div id="batchManageContent" class="p-6 hidden">
+                    <div class="mb-4 flex justify-between items-center">
+                        <h4 class="text-lg font-semibold">已添加的自定义网址</h4>
+                        <div class="space-x-2">
+                            <button id="addNewFromBatch"
+                                class="px-3 py-1 text-sm bg-green-100 text-green-700 hover:bg-green-200 rounded">➕
+                                添加</button>
+                            <button id="selectAllCustom"
+                                class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded">全选</button>
+                            <button id="deleteSelectedCustom"
+                                class="px-3 py-1 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded">删除选中</button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                        <input type="checkbox" id="selectAllCheckbox" class="rounded">
+                                    </th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">网站名称
+                                    </th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">分组</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">测试网址
+                                    </th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">颜色</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customTargetsTable" class="bg-white divide-y divide-gray-200">
+                                <!-- 动态生成内容 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 表格导入标签页 -->
+                <div id="tableImportContent" class="p-6 hidden">
+                    <div class="space-y-4">
+                        <!-- 下载模板按钮 -->
+                        <div class="text-center">
+                            <button id="downloadTemplate"
+                                class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors font-medium">
+                                📥 下载表格模板
+                            </button>
+                            <p class="text-sm text-gray-600 mt-2">下载Excel模板，按格式填写后上传</p>
+                        </div>
+
+                        <!-- 文件上传区域 -->
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                            <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" class="hidden">
+                            <div id="uploadArea" class="cursor-pointer">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
+                                    viewBox="0 0 48 48">
+                                    <path
+                                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-600">
+                                    <span class="font-medium text-blue-600 hover:text-blue-500">点击上传文件</span>
+                                    或拖拽文件到此处
+                                </p>
+                                <p class="text-xs text-gray-500">支持 Excel (.xlsx, .xls) 和 CSV 格式</p>
+                            </div>
+                        </div>
+
+                        <!-- 格式说明 -->
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <h5 class="font-medium text-yellow-900 mb-2">📋 表格格式要求</h5>
+                            <div class="text-sm text-yellow-800 space-y-2">
+                                <p><strong>必需列（按顺序）：</strong></p>
+                                <ol class="list-decimal list-inside ml-4 space-y-1">
+                                    <li><strong>网站名称</strong> - 监测目标的显示名称</li>
+                                    <li><strong>分组</strong> - 分组名称（如：国外服务、技术社区等）</li>
+                                    <li><strong>测试网址</strong> - 完整的HTTP/HTTPS网址</li>
+                                    <li><strong>图表颜色</strong> - 十六进制颜色代码（如：#FF0000）</li>
+                                    <li><strong>是否启用</strong> - TRUE或FALSE</li>
+                                </ol>
+                                <p class="text-yellow-700 font-medium mt-3">
+                                    ⚠️ 请严格按照模板格式填写，第一行为标题行，从第二行开始填写数据
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 导入按钮 -->
+                        <div class="text-center">
+                            <button id="importFromTable"
+                                class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                                📤 导入表格数据
+                            </button>
+                        </div>
+
+                        <!-- 导入结果显示 -->
+                        <div id="importResult" class="hidden"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模态框底部 -->
+            <div class="modal-footer px-6 py-4 border-t border-gray-200 flex justify-end space-x-3 flex-shrink-0">
+                <button id="cancelCustomUrl"
+                    class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============== 配置目标站点 ===============
+        const targets = [
+            {
+                name: "Google",
+                testUrls: [
+                    "https://clients3.google.com/generate_204",
+                    "https://www.google.com/favicon.ico"
+                ],
+                color: "rgb(59, 130, 246)",
+                enabled: true,
+                group: "国外服务"
+            },
+            {
+                name: "YouTube",
+                testUrls: [
+                    "https://www.youtube.com/generate_204",
+                    "https://www.youtube.com/favicon.ico"
+                ],
+                color: "rgb(239, 68, 68)",
+                enabled: true,
+                group: "国外服务"
+            },
+            {
+                name: "Instagram",
+                testUrls: [
+                    "https://www.instagram.com/favicon.ico"
+                ],
+                color: "rgb(236, 72, 153)",
+                enabled: true,
+                group: "社交媒体"
+            },
+            {
+                name: "X / Twitter",
+                testUrls: [
+                    "https://abs.twimg.com/favicons/twitter.ico",
+                    "https://x.com/favicon.ico"
+                ],
+                color: "rgb(15, 23, 42)",
+                enabled: true,
+                group: "社交媒体"
+            },
+            {
+                name: "百度",
+                testUrls: [
+                    "https://www.baidu.com/favicon.ico"
+                ],
+                color: "rgb(37, 99, 235)",
+                enabled: true,
+                group: "国内服务"
+            },
+            {
+                name: "腾讯视频",
+                testUrls: [
+                    "https://v.qq.com/favicon.ico"
+                ],
+                color: "rgb(34, 197, 94)",
+                enabled: true,
+                group: "国内服务"
+            },
+            {
+                name: "Nodeseek",
+                testUrls: [
+                    "https://www.nodeseek.com/favicon.ico"
+                ],
+                color: "rgb(139, 92, 246)",
+                enabled: true,
+                group: "技术社区"
+            }
+        ];
+
+        // =============== 全局变量 ===============
+        const intervalSelect = document.getElementById("intervalSelect");
+        const timeRangeSelect = document.getElementById("timeRangeSelect");
+        const exportBtn = document.getElementById("exportBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const addCustomBtn = document.getElementById("addCustomBtn");
+        const importConfigBtn = document.getElementById("importConfigBtn");
+        const exportConfigBtn = document.getElementById("exportConfigBtn");
+        const tbody = document.getElementById("status-tbody");
+        const targetSelector = document.getElementById("targetSelector");
+
+        let UPDATE_INTERVAL = Number(intervalSelect.value);
+        let TIME_RANGE_MINUTES = Number(timeRangeSelect.value);
+        let HISTORY_LENGTH = Math.floor((TIME_RANGE_MINUTES * 60 * 1000) / UPDATE_INTERVAL);
+        let timerId;
+        let latencyChart;
+
+        // 详细统计数据
+        let detailedStats = {};
+
+        // 初始化统计数据的函数
+        function initializeStatsForTarget(targetName) {
+            detailedStats[targetName] = {
+                // 延迟统计
+                latencies: [],
+                minLatency: null,
+                maxLatency: null,
+                avgLatency: null,
+
+                // 离线统计
+                offlineCount: 0,
+                totalOfflineTime: 0,
+                lastOfflineStart: null,
+                isCurrentlyOffline: false,
+                offlineEvents: [], // 记录每次离线事件 {start, end, duration}
+
+                // 在线统计
+                totalOnlineTime: 0,
+                lastOnlineStart: null,
+                isCurrentlyOnline: false,
+                onlineEvents: [], // 记录每次在线事件 {start, end, duration}
+
+                // 会话统计
+                sessionStart: Date.now(),
+                totalChecks: 0,
+                successfulChecks: 0
+            };
+        }
+
+        targets.forEach(t => {
+            initializeStatsForTarget(t.name);
+        });
+
+        // 保持原有的初始化代码兼容性
+        // 这部分代码已经在上面的initializeStatsForTarget函数中处理了
+
+        // =============== DOM 初始化 ===============
+        function initializeTargetSelector() {
+            targetSelector.innerHTML = '';
+
+            // 根据当前选中的分组筛选目标
+            const filteredTargets = currentSelectedGroup
+                ? targets.filter(target => target.group === currentSelectedGroup)
+                : targets;
+
+            if (currentViewMode === 'group' && !currentSelectedGroup) {
+                // 分组显示模式
+                const groups = getAllGroups();
+                groups.forEach(group => {
+                    const groupTargetsInGroup = targets.filter(t => t.group === group);
+                    const enabledCount = groupTargetsInGroup.filter(t => t.enabled).length;
+                    const totalCount = groupTargetsInGroup.length;
+
+                    const groupContainer = document.createElement('div');
+                    groupContainer.className = 'group-container';
+                    groupContainer.setAttribute('data-group', group);
+
+                    // 分组标题（可点击折叠）
+                    const groupHeader = document.createElement('div');
+                    const isCollapsed = groupCollapsedState[group] || false;
+                    groupHeader.className = `group-header ${isCollapsed ? 'collapsed' : ''}`;
+                    groupHeader.onclick = () => toggleGroupCollapse(group);
+
+                    const icons = {
+                        '国外服务': '🌍',
+                        '国内服务': '🏠',
+                        '社交媒体': '📱',
+                        '技术社区': '💻'
+                    };
+
+                    groupHeader.innerHTML = `
+                        <span class="arrow">▼</span>
+                        <span>${icons[group] || '📁'} ${group}</span>
+                        <div class="group-stats">
+                            <span>已选: ${enabledCount}/${totalCount}</span>
+                            <span>•</span>
+                            <span>${totalCount} 个目标</span>
+                        </div>
+                    `;
+
+                    // 分组内容
+                    const groupContent = document.createElement('div');
+                    groupContent.className = `group-content ${isCollapsed ? 'collapsed' : ''}`;
+
+                    const groupTargets = document.createElement('div');
+                    groupTargets.className = 'group-targets';
+
+                    // 添加该分组的目标
+                    groupTargetsInGroup.forEach(target => {
+                        const originalIndex = targets.indexOf(target);
+                        const targetCard = document.createElement('div');
+                        targetCard.className = `target-card ${target.enabled ? 'selected' : ''}`;
+                        targetCard.innerHTML = `
+                            <input type="checkbox" ${target.enabled ? 'checked' : ''} 
+                                   onchange="toggleTarget(${originalIndex})" style="margin: 0; margin-right: 8px;">
+                            <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${target.color}"></div>
+                            <span>${target.name}</span>
+                        `;
+                        groupTargets.appendChild(targetCard);
+                    });
+
+                    groupContent.appendChild(groupTargets);
+                    groupContainer.appendChild(groupHeader);
+                    groupContainer.appendChild(groupContent);
+                    targetSelector.appendChild(groupContainer);
+                });
+            } else {
+                // 列表显示模式或单个分组显示
+                const targetsToShow = currentSelectedGroup ? filteredTargets : targets;
+                targetsToShow.forEach(target => {
+                    const originalIndex = targets.indexOf(target);
+                    const targetCard = document.createElement('div');
+                    targetCard.className = `target-card ${target.enabled ? 'selected' : ''}`;
+                    targetCard.innerHTML = `
+                        <input type="checkbox" ${target.enabled ? 'checked' : ''} 
+                               onchange="toggleTarget(${originalIndex})" style="margin: 0; margin-right: 8px;">
+                        <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${target.color}"></div>
+                        <span>${target.name}</span>
+                        <span class="ml-auto text-xs text-gray-500">${target.group || '未分组'}</span>
+                    `;
+                    targetSelector.appendChild(targetCard);
+                });
+            }
+
+            // 更新统计信息
+            updateGroupStats();
+        }
+
+        function initializeTable() {
+            tbody.innerHTML = '';
+
+            // 根据当前选中的分组筛选要显示的目标
+            const targetsToShow = currentSelectedGroup
+                ? targets.filter(t => t.group === currentSelectedGroup)
+                : targets;
+
+            if (!currentSelectedGroup && currentViewMode === 'group') {
+                // 分组显示模式
+                const groups = getAllGroups();
+                groups.forEach(group => {
+                    // 添加分组标题行
+                    const groupRow = document.createElement("tr");
+                    groupRow.className = "bg-gradient-to-r from-indigo-500 to-purple-600 text-white";
+                    groupRow.innerHTML = `
+                        <td colspan="7" class="px-4 py-3 text-left font-semibold">
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center">
+                                    <span class="mr-2">${getGroupIcon(group)}</span>
+                                    ${group}
+                                </span>
+                                <span class="text-sm opacity-90">
+                                    ${targets.filter(t => t.group === group).length} 个目标
+                                </span>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(groupRow);
+
+                    // 添加该分组的目标
+                    targets.filter(t => t.group === group).forEach(t => {
+                        addTargetRow(t);
+                    });
+                });
+            } else {
+                // 列表显示模式或单个分组显示
+                targetsToShow.forEach(t => {
+                    addTargetRow(t);
+                });
+            }
+        }
+
+        // 获取分组图标
+        function getGroupIcon(group) {
+            const icons = {
+                '国外服务': '🌍',
+                '国内服务': '🏠',
+                '社交媒体': '📱',
+                '技术社区': '💻'
+            };
+            return icons[group] || '📁';
+        }
+
+        // 添加目标行
+        function addTargetRow(t) {
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50 transition-colors";
+            tr.innerHTML = `
+                <td class="px-4 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full mr-3" style="background-color: ${t.color}"></div>
+                        <div class="text-sm font-medium text-gray-900">${t.name}</div>
+                    </div>
+                </td>
+                <td class="px-4 py-4 whitespace-nowrap text-center">
+                    <div class="flex items-center justify-center">
+                        <span class="status-indicator status-checking"></span>
+                        <span id="${t.name}-status" class="ml-2 text-sm w-12 text-center">待检测</span>
+                    </div>
+                </td>
+                <td id="${t.name}-latency" class="px-4 py-4 whitespace-nowrap text-center text-sm font-mono">—</td>
+                <td class="px-4 py-4 whitespace-nowrap text-center">
+                    <div id="${t.name}-latency-stats" class="text-xs text-gray-600">
+                        最小: —<br>
+                        最大: —<br>
+                        平均: —
+                    </div>
+                </td>
+                <td class="px-4 py-4 whitespace-nowrap text-center">
+                    <div id="${t.name}-online-stats" class="text-xs text-gray-600">
+                        在线时长: —<br>
+                        在线率: —
+                    </div>
+                </td>
+                <td class="px-4 py-4 whitespace-nowrap text-center">
+                    <div id="${t.name}-offline-stats" class="text-xs text-gray-600">
+                        离线次数: 0<br>
+                        离线时长: 0s
+                    </div>
+                </td>
+                <td id="${t.name}-time" class="px-4 py-4 whitespace-nowrap text-center text-sm text-gray-500">—</td>
+            `;
+
+            // 根据目标的启用状态设置行的显示状态
+            if (!t.enabled) {
+                tr.style.display = 'none';
+                tr.classList.add('hidden');
+            }
+
+            tbody.appendChild(tr);
+        }
+
+        function initializeDetailedStats() {
+            const tbody = document.getElementById('detailedStatsBody');
+            tbody.innerHTML = '';
+
+            // 根据当前选中的分组筛选要显示的目标
+            const targetsToShow = currentSelectedGroup
+                ? targets.filter(t => t.group === currentSelectedGroup)
+                : targets;
+
+            if (!currentSelectedGroup && currentViewMode === 'group') {
+                // 分组显示模式
+                const groups = getAllGroups();
+                groups.forEach(group => {
+                    // 添加分组标题行
+                    const groupRow = document.createElement("tr");
+                    groupRow.className = "bg-gradient-to-r from-indigo-500 to-purple-600 text-white";
+                    groupRow.innerHTML = `
+                        <td colspan="12" class="px-6 py-4 text-left font-semibold">
+                            <div class="flex items-center justify-between">
+                                <span class="flex items-center">
+                                    <span class="mr-2">${getGroupIcon(group)}</span>
+                                    ${group}
+                                </span>
+                                <span class="text-sm opacity-90">
+                                    ${targets.filter(t => t.group === group).length} 个目标
+                                </span>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(groupRow);
+
+                    // 添加该分组的目标
+                    targets.filter(t => t.group === group).forEach(t => {
+                        addDetailedStatsRow(t, tbody);
+                    });
+                });
+            } else {
+                // 列表显示模式或单个分组显示
+                targetsToShow.forEach(t => {
+                    addDetailedStatsRow(t, tbody);
+                });
+            }
+        }
+
+        // 添加详细统计行
+        function addDetailedStatsRow(t, tbody) {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 transition-colors';
+            tr.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full mr-3" style="background-color: ${t.color}"></div>
+                        <div class="text-base font-medium text-gray-900">${t.name}</div>
+                    </div>
+                </td>
+                <td id="${t.name}-detailed-min" class="px-6 py-4 whitespace-nowrap text-center text-base font-mono text-gray-900">—</td>
+                <td id="${t.name}-detailed-max" class="px-6 py-4 whitespace-nowrap text-center text-base font-mono text-gray-900">—</td>
+                <td id="${t.name}-detailed-avg" class="px-6 py-4 whitespace-nowrap text-center text-base font-mono text-gray-900">—</td>
+                <td id="${t.name}-detailed-total" class="px-6 py-4 whitespace-nowrap text-center text-base font-mono text-gray-900">0</td>
+                <td id="${t.name}-detailed-success" class="px-6 py-4 whitespace-nowrap text-center text-base font-mono text-gray-900">0</td>
+                <td id="${t.name}-detailed-rate" class="px-6 py-4 whitespace-nowrap text-center text-base font-mono text-gray-900">—</td>
+                <td id="${t.name}-detailed-online-time" class="px-6 py-4 whitespace-nowrap text-center text-base font-mono text-gray-900">—</td>
+                <td id="${t.name}-detailed-online-rate" class="px-6 py-4 whitespace-nowrap text-center text-base font-mono text-gray-900">—</td>
+                <td id="${t.name}-detailed-offline-count" class="px-6 py-4 whitespace-nowrap text-center text-base font-mono text-gray-900">0</td>
+                <td id="${t.name}-detailed-offline-time" class="px-6 py-4 whitespace-nowrap text-center text-base font-mono text-gray-900">—</td>
+                <td id="${t.name}-detailed-offline-details" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                    <div class="max-w-xs">
+                        <div class="text-xs text-gray-600">暂无离线记录</div>
+                    </div>
+                </td>
+            `;
+
+            // 根据目标的启用状态设置行的显示状态
+            if (!t.enabled) {
+                tr.style.display = 'none';
+                tr.classList.add('hidden');
+            }
+
+            tbody.appendChild(tr);
+        }
+
+        // =============== Chart.js 初始化 ===============
+        function initializeChart() {
+            const ctx = document.getElementById("latencyChart").getContext("2d");
+
+            latencyChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: [],
+                    datasets: targets.map(t => ({
+                        label: t.name,
+                        data: [],
+                        borderColor: t.color,
+                        backgroundColor: t.color + '20',
+                        tension: 0.3,
+                        spanGaps: false, // 不连接离线点
+                        pointRadius: 2,
+                        pointHoverRadius: 4,
+                        borderWidth: 2,
+                        fill: false,
+                        hidden: !t.enabled
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                filter: function (legendItem, chartData) {
+                                    const index = legendItem.datasetIndex;
+                                    return targets[index].enabled;
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: "nearest",
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#374151',
+                            bodyColor: '#374151',
+                            borderColor: '#d1d5db',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            padding: 12,
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.parsed.y;
+                                    return value !== null ? `${context.dataset.label}: ${value}ms` : `${context.dataset.label}: 离线`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: "time",
+                            time: {
+                                unit: TIME_RANGE_MINUTES <= 5 ? "second" : "minute",
+                                displayFormats: {
+                                    minute: "HH:mm",
+                                    second: "HH:mm:ss"
+                                }
+                            },
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 12
+                            },
+                            title: {
+                                display: true,
+                                text: '时间',
+                                font: { size: 12, weight: 'bold' }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y: {
+                            suggestedMin: 0,
+                            title: {
+                                display: true,
+                                text: "延迟 (ms)",
+                                font: { size: 12, weight: 'bold' }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // =============== 目标切换功能 ===============
+        function toggleTarget(index) {
+            targets[index].enabled = !targets[index].enabled;
+
+            // 重新初始化界面以反映更改
+            initializeTargetSelector();
+            updateGroupStats();
+
+            // 更新图表显示
+            latencyChart.data.datasets[index].hidden = !targets[index].enabled;
+            latencyChart.update('none');
+
+            // 实时隐藏或显示对应的详细信息行
+            toggleTargetDetailDisplay(targets[index].name, targets[index].enabled);
+        }
+
+        // 切换目标详细信息显示
+        function toggleTargetDetailDisplay(targetName, isEnabled) {
+            // 隐藏或显示状态表格中的行
+            const statusRows = document.querySelectorAll(`#status-tbody tr`);
+            statusRows.forEach(row => {
+                const targetCell = row.querySelector('td:first-child .text-sm');
+                if (targetCell && targetCell.textContent.trim() === targetName) {
+                    if (isEnabled) {
+                        row.style.display = '';
+                        row.classList.remove('hidden');
+                    } else {
+                        row.style.display = 'none';
+                        row.classList.add('hidden');
+                    }
+                }
+            });
+
+            // 隐藏或显示详细统计表格中的行
+            const detailRows = document.querySelectorAll(`#detailedStatsBody tr`);
+            detailRows.forEach(row => {
+                const targetCell = row.querySelector('td:first-child .text-base');
+                if (targetCell && targetCell.textContent.trim() === targetName) {
+                    if (isEnabled) {
+                        row.style.display = '';
+                        row.classList.remove('hidden');
+                    } else {
+                        row.style.display = 'none';
+                        row.classList.add('hidden');
+                    }
+                }
+            });
+
+            // 更新图表中对应数据集的显示状态
+            if (latencyChart && latencyChart.data.datasets) {
+                const datasetIndex = targets.findIndex(t => t.name === targetName);
+                if (datasetIndex >= 0) {
+                    latencyChart.data.datasets[datasetIndex].hidden = !isEnabled;
+                    latencyChart.update('none');
+                }
+            }
+        }
+
+        // =============== 配置导入导出功能 ===============
+
+        // 导出配置
+        function exportConfig() {
+            const customTargets = targets.filter(t => !isDefaultTarget(t.name));
+            const configData = customTargets.map(t => ({
+                name: t.name,
+                testUrls: t.testUrls,
+                color: t.color,
+                enabled: t.enabled
+            }));
+
+            const dataStr = JSON.stringify(configData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `latency-monitor-config-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+
+            showNotification('配置已导出', 'success');
+        }
+
+        // 导入配置
+        function importConfig(configData) {
+            try {
+                const newTargets = JSON.parse(configData);
+
+                if (!Array.isArray(newTargets)) {
+                    throw new Error('配置格式错误：应该是数组格式');
+                }
+
+                // 验证配置格式
+                for (const target of newTargets) {
+                    if (!target.name || !target.testUrls || !Array.isArray(target.testUrls)) {
+                        throw new Error(`配置格式错误：${target.name || '未知目标'} 缺少必要字段`);
+                    }
+                }
+
+                // 移除现有的自定义目标
+                for (let i = targets.length - 1; i >= 0; i--) {
+                    if (!isDefaultTarget(targets[i].name)) {
+                        delete detailedStats[targets[i].name];
+                        targets.splice(i, 1);
+                    }
+                }
+
+                // 添加新的自定义目标
+                newTargets.forEach(target => {
+                    const newTarget = {
+                        name: target.name,
+                        testUrls: target.testUrls,
+                        color: target.color || getRandomColor(),
+                        enabled: target.enabled !== false,
+                        group: target.group || '未分组',
+                        isCustom: true
+                    };
+
+                    targets.push(newTarget);
+
+                    // 初始化统计数据
+                    initializeStatsForTarget(newTarget.name);
+                });
+
+                // 重新初始化界面
+                initializeGroupSelector();
+                initializeTargetSelector();
+                initializeTable();
+                initializeDetailedStats();
+
+                // 更新图表数据集
+                if (latencyChart) {
+                    latencyChart.data.datasets = targets.map(t => ({
+                        label: t.name,
+                        data: [],
+                        borderColor: t.color,
+                        backgroundColor: t.color + '20',
+                        tension: 0.3,
+                        spanGaps: false,
+                        pointRadius: 2,
+                        pointHoverRadius: 4,
+                        borderWidth: 2,
+                        fill: false,
+                        hidden: !t.enabled
+                    }));
+                    latencyChart.update('none');
+                }
+
+                showNotification(`成功导入 ${newTargets.length} 个自定义目标`, 'success');
+
+            } catch (error) {
+                throw new Error(`导入失败：${error.message}`);
+            }
+        }
+
+        // 判断是否为默认目标
+        function isDefaultTarget(name) {
+            const defaultNames = ['Google', 'YouTube', 'Instagram', 'X / Twitter', '百度', '腾讯视频', 'Nodeseek'];
+            return defaultNames.includes(name);
+        }
+
+        // 生成随机颜色
+        function getRandomColor() {
+            const colors = [
+                'rgb(239, 68, 68)', 'rgb(34, 197, 94)', 'rgb(59, 130, 246)',
+                'rgb(236, 72, 153)', 'rgb(139, 92, 246)', 'rgb(245, 158, 11)',
+                'rgb(20, 184, 166)', 'rgb(239, 68, 68)', 'rgb(156, 163, 175)'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // =============== 图表更新辅助函数 ===============
+
+        // 重建图表数据集
+        function rebuildChartDatasets() {
+            if (latencyChart) {
+                latencyChart.data.datasets = targets.map(t => ({
+                    label: t.name,
+                    data: [],
+                    borderColor: t.color,
+                    backgroundColor: t.color + '20',
+                    tension: 0.3,
+                    spanGaps: false,
+                    pointRadius: 2,
+                    pointHoverRadius: 4,
+                    borderWidth: 2,
+                    fill: false,
+                    hidden: !t.enabled
+                }));
+                latencyChart.update('none');
+            }
+        }
+
+        // =============== 分组管理功能 ===============
+
+        // 获取所有分组
+        function getAllGroups() {
+            const groups = new Set();
+            targets.forEach(target => {
+                if (target.group) {
+                    groups.add(target.group);
+                }
+            });
+            return Array.from(groups).sort();
+        }
+
+        // 当前选中的分组
+        let currentSelectedGroup = null;
+
+        // 当前显示模式
+        let currentViewMode = 'group'; // 'list' 或 'group'
+
+        // 分组折叠状态管理
+        let groupCollapsedState = {}; // 记录每个分组的折叠状态
+
+        // 初始化分组筛选下拉框
+        function initializeGroupSelector() {
+            const groupFilterSelect = document.getElementById('groupFilterSelect');
+            const groups = getAllGroups();
+
+            // 清空现有选项（保留全部分组选项）
+            while (groupFilterSelect.children.length > 1) {
+                groupFilterSelect.removeChild(groupFilterSelect.lastChild);
+            }
+
+            // 添加动态分组选项
+            groups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group;
+                const icons = {
+                    '国外服务': '🌍',
+                    '国内服务': '🏠',
+                    '社交媒体': '📱',
+                    '技术社区': '💻'
+                };
+                option.textContent = `${icons[group] || '📁'} ${group}`;
+                groupFilterSelect.appendChild(option);
+            });
+
+            // 设置当前选中值
+            groupFilterSelect.value = currentSelectedGroup || '';
+        }
+
+        // 按分组筛选
+        function filterByGroup(group) {
+            currentSelectedGroup = group;
+            document.getElementById('groupFilterSelect').value = group || '';
+            initializeTargetSelector();
+            updateGroupStats();
+        }
+
+        // 切换显示模式
+        function switchViewMode(mode) {
+            currentViewMode = mode;
+
+            // 更新按钮样式
+            const listBtn = document.getElementById('viewModeList');
+            const groupBtn = document.getElementById('viewModeGroup');
+
+            if (mode === 'list') {
+                listBtn.className = 'px-2 py-1 text-xs rounded bg-white shadow-sm text-gray-700 hover:bg-gray-50 transition-colors';
+                groupBtn.className = 'px-2 py-1 text-xs rounded text-gray-500 hover:bg-white hover:shadow-sm transition-colors';
+            } else {
+                listBtn.className = 'px-2 py-1 text-xs rounded text-gray-500 hover:bg-white hover:shadow-sm transition-colors';
+                groupBtn.className = 'px-2 py-1 text-xs rounded bg-white shadow-sm text-gray-700 hover:bg-gray-50 transition-colors';
+            }
+
+            initializeTargetSelector();
+        }
+
+        // 更新分组统计信息
+        function updateGroupStats() {
+            const selectedTargets = targets.filter(t => t.enabled);
+            const totalGroups = getAllGroups().length;
+
+            document.getElementById('selectedCount').textContent = `已选择: ${selectedTargets.length} 个目标`;
+            document.getElementById('groupCount').textContent = `共 ${totalGroups} 个分组`;
+        }
+
+        // 切换分组折叠状态
+        function toggleGroupCollapse(groupName) {
+            groupCollapsedState[groupName] = !groupCollapsedState[groupName];
+
+            const groupContainer = document.querySelector(`[data-group="${groupName}"]`);
+            if (groupContainer) {
+                const header = groupContainer.querySelector('.group-header');
+                const content = groupContainer.querySelector('.group-content');
+
+                if (groupCollapsedState[groupName]) {
+                    header.classList.add('collapsed');
+                    content.classList.add('collapsed');
+                } else {
+                    header.classList.remove('collapsed');
+                    content.classList.remove('collapsed');
+                }
+            }
+        }
+
+        // 自定义分组输入处理
+        function handleCustomGroupInput() {
+            const groupSelect = document.getElementById('customGroup');
+            const groupInput = document.getElementById('customGroupInput');
+
+            if (groupSelect.value === '自定义') {
+                groupInput.classList.remove('hidden');
+                groupInput.focus();
+            } else {
+                groupInput.classList.add('hidden');
+            }
+        }
+
+        // 重新初始化所有界面组件
+        function reinitializeInterface() {
+            initializeGroupSelector();
+            initializeTargetSelector();
+            initializeTable();
+            initializeDetailedStats();
+            rebuildChartDatasets();
+            updateGroupStats();
+        }
+
+        // =============== 自定义网址管理功能 ===============
+
+        // 标签页切换功能
+        function switchTab(activeTabId, activeContentId) {
+            // 隐藏所有标签页内容
+            document.getElementById('singleAddContent').classList.add('hidden');
+            document.getElementById('batchManageContent').classList.add('hidden');
+            document.getElementById('tableImportContent').classList.add('hidden');
+
+            // 重置所有标签样式
+            document.getElementById('singleAddTab').className = 'px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-md';
+            document.getElementById('batchManageTab').className = 'px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-md';
+            document.getElementById('tableImportTab').className = 'px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-md';
+
+            // 激活选中的标签
+            document.getElementById(activeTabId).className = 'px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md border-b-2 border-blue-600';
+            document.getElementById(activeContentId).classList.remove('hidden');
+
+            // 如果是批量管理标签页，刷新表格
+            if (activeContentId === 'batchManageContent') {
+                refreshCustomTargetsTable();
+            }
+        }
+
+        // 刷新自定义目标表格
+        function refreshCustomTargetsTable() {
+            const tbody = document.getElementById('customTargetsTable');
+            tbody.innerHTML = '';
+
+            const customTargets = targets.filter(t => !isDefaultTarget(t.name));
+
+            customTargets.forEach((target, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-3 py-2">
+                        <input type="checkbox" class="custom-target-checkbox rounded" data-name="${target.name}">
+                    </td>
+                    <td class="px-3 py-2 text-sm font-medium text-gray-900">${target.name}</td>
+                    <td class="px-3 py-2">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            ${target.group || '未分组'}
+                        </span>
+                    </td>
+                    <td class="px-3 py-2 text-sm text-gray-500 max-w-xs truncate" title="${target.testUrls[0]}">${target.testUrls[0]}</td>
+                    <td class="px-3 py-2">
+                        <div class="w-6 h-6 rounded" style="background-color: ${target.color}"></div>
+                    </td>
+                    <td class="px-3 py-2">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${target.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                            ${target.enabled ? '启用' : '禁用'}
+                        </span>
+                    </td>
+                    <td class="px-3 py-2 text-sm space-x-2">
+                        <button onclick="editCustomTarget('${target.name}')" class="text-blue-600 hover:text-blue-900">编辑</button>
+                        <button onclick="deleteCustomTarget('${target.name}')" class="text-red-600 hover:text-red-900">删除</button>
+                        <button onclick="toggleCustomTarget('${target.name}')" class="text-gray-600 hover:text-gray-900">
+                            ${target.enabled ? '禁用' : '启用'}
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 下载表格模板
+        function downloadTemplate() {
+            const templateData = [
+                ['网站名称', '分组', '测试网址', '图表颜色', '是否启用'],
+                ['示例网站1', '国外服务', 'https://example1.com/favicon.ico', '#FF0000', 'TRUE'],
+                ['示例网站2', '技术社区', 'https://example2.com/robots.txt', '#00FF00', 'TRUE'],
+                ['示例网站3', '自定义', 'https://example3.com/ping', '#0000FF', 'FALSE']
+            ];
+
+            // 创建CSV内容
+            const csvContent = templateData.map(row =>
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('\n');
+
+            // 添加BOM以支持中文
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `延迟监测自定义网址模板-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+
+            showNotification('模板文件已下载', 'success');
+        }
+
+        // 处理表格文件导入
+        function handleTableImport(file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const content = e.target.result;
+                    let rows;
+
+                    if (file.name.endsWith('.csv')) {
+                        // 处理CSV文件
+                        rows = content.split('\n').map(row => {
+                            // 简单的CSV解析（处理引号包围的字段）
+                            const fields = [];
+                            let current = '';
+                            let inQuotes = false;
+
+                            for (let i = 0; i < row.length; i++) {
+                                const char = row[i];
+                                if (char === '"') {
+                                    inQuotes = !inQuotes;
+                                } else if (char === ',' && !inQuotes) {
+                                    fields.push(current.trim());
+                                    current = '';
+                                } else {
+                                    current += char;
+                                }
+                            }
+                            fields.push(current.trim());
+                            return fields;
+                        });
+                    } else {
+                        // 对于Excel文件，这里需要更复杂的处理
+                        // 简化处理：假设用户会转换为CSV格式
+                        showNotification('请将Excel文件另存为CSV格式后重新上传', 'warning');
+                        return;
+                    }
+
+                    // 跳过标题行，处理数据行
+                    const dataRows = rows.slice(1).filter(row => row.length >= 4 && row[0].trim());
+
+                    if (dataRows.length === 0) {
+                        throw new Error('没有找到有效的数据行');
+                    }
+
+                    const importedTargets = [];
+                    const errors = [];
+
+                    dataRows.forEach((row, index) => {
+                        try {
+                            const [name, group, url, color, enabled] = row.map(cell => cell.replace(/^"|"$/g, '').trim());
+
+                            if (!name || !url) {
+                                errors.push(`第${index + 2}行：网站名称和测试网址不能为空`);
+                                return;
+                            }
+
+                            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                                errors.push(`第${index + 2}行：测试网址必须以http://或https://开头`);
+                                return;
+                            }
+
+                            const colorValue = color.startsWith('#') ? color : '#' + color.replace('#', '');
+                            const enabledValue = enabled.toUpperCase() === 'TRUE';
+                            const groupValue = group || '未分组';
+
+                            importedTargets.push({
+                                name: name,
+                                testUrls: [url],
+                                color: colorValue,
+                                enabled: enabledValue,
+                                isCustom: true,
+                                group: groupValue
+                            });
+                        } catch (error) {
+                            errors.push(`第${index + 2}行：数据格式错误 - ${error.message}`);
+                        }
+                    });
+
+                    // 显示导入结果
+                    const resultDiv = document.getElementById('importResult');
+                    resultDiv.classList.remove('hidden');
+
+                    if (errors.length > 0) {
+                        resultDiv.innerHTML = `
+                            <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                                <h5 class="font-medium text-red-900 mb-2">导入错误</h5>
+                                <ul class="text-sm text-red-700 list-disc list-inside">
+                                    ${errors.map(error => `<li>${error}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+
+                    if (importedTargets.length > 0) {
+                        // 添加成功导入的目标
+                        importedTargets.forEach(target => {
+                            // 检查是否已存在同名目标
+                            const existingIndex = targets.findIndex(t => t.name === target.name);
+                            if (existingIndex >= 0) {
+                                // 更新现有目标
+                                targets[existingIndex] = target;
+                            } else {
+                                // 添加新目标
+                                targets.push(target);
+                                initializeStatsForTarget(target.name);
+                            }
+                        });
+
+                        // 重新初始化界面
+                        initializeTargetSelector();
+                        initializeTable();
+                        initializeDetailedStats();
+                        rebuildChartDatasets();
+
+                        const successDiv = `
+                            <div class="bg-green-50 border border-green-200 rounded-md p-4 ${errors.length > 0 ? 'mt-4' : ''}">
+                                <h5 class="font-medium text-green-900 mb-2">导入成功</h5>
+                                <p class="text-sm text-green-700">成功导入 ${importedTargets.length} 个监测目标</p>
+                            </div>
+                        `;
+
+                        if (errors.length > 0) {
+                            resultDiv.innerHTML += successDiv;
+                        } else {
+                            resultDiv.innerHTML = successDiv;
+                        }
+
+                        showNotification(`成功导入 ${importedTargets.length} 个监测目标`, 'success');
+                    }
+
+                } catch (error) {
+                    document.getElementById('importResult').innerHTML = `
+                        <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                            <h5 class="font-medium text-red-900 mb-2">导入失败</h5>
+                            <p class="text-sm text-red-700">${error.message}</p>
+                        </div>
+                    `;
+                    document.getElementById('importResult').classList.remove('hidden');
+                }
+            };
+
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // 编辑自定义目标
+        function editCustomTarget(name) {
+            const target = targets.find(t => t.name === name);
+            if (target) {
+                // 切换到单个添加标签页并填充数据
+                switchTab('singleAddTab', 'singleAddContent');
+                document.getElementById('customName').value = target.name;
+                document.getElementById('customUrl').value = target.testUrls[0];
+                document.getElementById('customColor').value = target.color;
+
+                // 设置分组
+                const groupSelect = document.getElementById('customGroup');
+                const groupInput = document.getElementById('customGroupInput');
+                if (target.group && ['国外服务', '国内服务', '社交媒体', '技术社区'].includes(target.group)) {
+                    groupSelect.value = target.group;
+                    groupInput.classList.add('hidden');
+                } else {
+                    groupSelect.value = '自定义';
+                    groupInput.value = target.group || '';
+                    groupInput.classList.remove('hidden');
+                }
+
+                // 修改按钮文本为更新
+                document.getElementById('confirmCustomUrl').textContent = '🔄 更新监测';
+                document.getElementById('confirmCustomUrl').setAttribute('data-editing', name);
+            }
+        }
+
+        // 删除自定义目标
+        function deleteCustomTarget(name) {
+            if (confirm(`确定要删除监测目标"${name}"吗？`)) {
+                const index = targets.findIndex(t => t.name === name);
+                if (index >= 0) {
+                    targets.splice(index, 1);
+                    delete detailedStats[name];
+
+                    // 重新初始化界面
+                    initializeTargetSelector();
+                    initializeTable();
+                    initializeDetailedStats();
+                    rebuildChartDatasets();
+                    refreshCustomTargetsTable();
+
+                    showNotification(`已删除监测目标"${name}"`, 'success');
+                }
+            }
+        }
+
+        // 切换自定义目标启用状态
+        function toggleCustomTarget(name) {
+            const target = targets.find(t => t.name === name);
+            if (target) {
+                target.enabled = !target.enabled;
+
+                // 重新初始化界面
+                initializeTargetSelector();
+                rebuildChartDatasets();
+                refreshCustomTargetsTable();
+
+                showNotification(`已${target.enabled ? '启用' : '禁用'}监测目标"${name}"`, 'success');
+            }
+        }
+
+        // =============== 自定义网址功能 ===============
+        function showCustomUrlModal() {
+            const modal = document.getElementById('customUrlModal');
+            const modalContent = document.getElementById('customModalContent');
+
+
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            setTimeout(() => {
+                document.getElementById('customName').focus();
+            }, 150);
+        }
+
+        function hideCustomUrlModal() {
+            const modal = document.getElementById('customUrlModal');
+            const modalContent = document.getElementById('customModalContent');
+
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+
+                // 重置表单和状态
+                document.getElementById('customUrlForm').reset();
+                document.getElementById('customColor').value = '#8b5cf6';
+                document.getElementById('customGroup').value = '';
+                document.getElementById('customGroupInput').value = '';
+                document.getElementById('customGroupInput').classList.add('hidden');
+                hideCustomFormError();
+                document.getElementById('confirmCustomUrl').textContent = '✅ 添加监测';
+                document.getElementById('confirmCustomUrl').removeAttribute('data-editing');
+
+                // 重置文件上传状态
+                document.getElementById('excelFileInput').value = '';
+                document.getElementById('importFromTable').disabled = true;
+                document.getElementById('importResult').classList.add('hidden');
+                document.getElementById('uploadArea').innerHTML = `
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-600">
+                        <span class="font-medium text-blue-600 hover:text-blue-500">点击上传文件</span>
+                        或拖拽文件到此处
+                    </p>
+                    <p class="text-xs text-gray-500">支持 Excel (.xlsx, .xls) 和 CSV 格式</p>
+                `;
+
+                // 重置到第一个标签页
+                switchTab('singleAddTab', 'singleAddContent');
+            }, 150);
+        }
+
+        function showCustomFormError(message) {
+            const errorDiv = document.getElementById('customFormError');
+            const errorMessage = document.getElementById('customFormErrorMessage');
+
+            errorMessage.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideCustomFormError() {
+            const errorDiv = document.getElementById('customFormError');
+            errorDiv.classList.add('hidden');
+        }
+
+        function handleAddCustomUrl() {
+            const name = document.getElementById('customName').value.trim();
+            const url = document.getElementById('customUrl').value.trim();
+            const color = document.getElementById('customColor').value;
+            const groupSelect = document.getElementById('customGroup').value;
+            const groupInput = document.getElementById('customGroupInput').value.trim();
+            const editingName = document.getElementById('confirmCustomUrl').getAttribute('data-editing');
+
+            // 确定分组
+            let group = groupSelect;
+            if (groupSelect === '自定义' && groupInput) {
+                group = groupInput;
+            } else if (!groupSelect) {
+                group = '未分组';
+            }
+
+            // 验证表单
+            if (!name) {
+                showCustomFormError('请输入网站名称');
+                document.getElementById('customName').focus();
+                return;
+            }
+
+            if (!url) {
+                showCustomFormError('请输入测试网址');
+                document.getElementById('customUrl').focus();
+                return;
+            }
+
+            if (!isValidURL(url)) {
+                showCustomFormError('请输入有效的网址格式（需包含http://或https://）');
+                document.getElementById('customUrl').focus();
+                return;
+            }
+
+            // 检查是否重复（编辑模式下排除自己）
+            if (targets.some(t => t.testUrls.includes(url) && t.name !== editingName)) {
+                showCustomFormError('该网址已存在，请勿重复添加');
+                return;
+            }
+
+            if (editingName) {
+                // 编辑模式：更新现有目标
+                const targetIndex = targets.findIndex(t => t.name === editingName);
+                if (targetIndex >= 0) {
+                    const oldName = targets[targetIndex].name;
+                    targets[targetIndex].name = name;
+                    targets[targetIndex].testUrls = [url];
+                    targets[targetIndex].color = color;
+                    targets[targetIndex].group = group;
+
+                    // 如果名称改变了，需要更新统计数据
+                    if (oldName !== name) {
+                        detailedStats[name] = detailedStats[oldName];
+                        delete detailedStats[oldName];
+                    }
+
+                    showNotification(`监测目标"${name}"已更新`, 'success');
+                }
+
+                // 重置编辑状态
+                document.getElementById('confirmCustomUrl').textContent = '✅ 添加监测';
+                document.getElementById('confirmCustomUrl').removeAttribute('data-editing');
+            } else {
+                // 添加模式：创建新目标
+                const newTarget = {
+                    name: name,
+                    testUrls: [url],
+                    color: color,
+                    enabled: true,
+                    isCustom: true,
+                    group: group
+                };
+
+                targets.push(newTarget);
+
+                // 初始化统计数据
+                initializeStatsForTarget(name);
+
+                showNotification(`自定义目标"${name}"添加成功`, 'success');
+            }
+
+            // 重新初始化界面
+            initializeGroupSelector();
+            initializeTargetSelector();
+            initializeTable();
+            initializeDetailedStats();
+
+            // 更新图表
+            latencyChart.data.datasets.push({
+                label: name,
+                data: [],
+                borderColor: color,
+                backgroundColor: color + '20',
+                tension: 0.3,
+                spanGaps: false,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                borderWidth: 2,
+                fill: false,
+                hidden: false
+            });
+
+            latencyChart.update('none');
+
+            hideCustomUrlModal();
+            showNotification(`自定义目标"${name}"添加成功`, 'success');
+        }
+
+        function isValidURL(string) {
+            try {
+                const url = new URL(string);
+                return url.protocol === 'http:' || url.protocol === 'https:';
+            } catch (_) {
+                return false;
+            }
+        }
+
+        // =============== HTTP延迟检测逻辑 ===============
+        async function pingTarget(target) {
+            try {
+                const results = [];
+                const testCount = 2; // 减少测试次数提高速度
+
+                for (let i = 0; i < testCount; i++) {
+                    const latency = await singleHttpTest(target, i);
+                    if (latency !== null) {
+                        results.push(latency);
+                    }
+
+                    if (i < testCount - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                }
+
+                if (results.length === 0) return null;
+
+                // 取最小值作为最佳结果
+                return Math.min(...results);
+
+            } catch (error) {
+                console.log(`${target.name} 检测失败:`, error.message);
+                return null;
+            }
+        }
+
+        async function singleHttpTest(target, testIndex) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+                const start = performance.now();
+
+                const testUrl = target.testUrls[testIndex % target.testUrls.length];
+                const uniqueUrl = testUrl + `?t=${Date.now()}&i=${testIndex}`;
+
+                await fetch(uniqueUrl, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    cache: 'no-store',
+                    signal: controller.signal,
+                    redirect: 'follow'
+                });
+
+                clearTimeout(timeoutId);
+                const latency = Math.round(performance.now() - start);
+
+                return Math.max(1, Math.min(latency, 10000));
+
+            } catch (error) {
+                return null;
+            }
+        }
+
+        // =============== 详细统计功能 ===============
+        function updateDetailedStats(targetName, isOnline, latency = null) {
+            const stats = detailedStats[targetName];
+            const now = Date.now();
+
+            // 更新检测统计
+            stats.totalChecks++;
+            if (isOnline) {
+                stats.successfulChecks++;
+
+                // 更新延迟统计
+                if (latency !== null) {
+                    stats.latencies.push(latency);
+                    stats.minLatency = stats.minLatency === null ? latency : Math.min(stats.minLatency, latency);
+                    stats.maxLatency = stats.maxLatency === null ? latency : Math.max(stats.maxLatency, latency);
+                    stats.avgLatency = stats.latencies.reduce((sum, l) => sum + l, 0) / stats.latencies.length;
+                }
+            }
+
+            // 处理在线/离线状态变化
+            if (isOnline && !stats.isCurrentlyOnline) {
+                // 刚刚上线
+                if (stats.isCurrentlyOffline && stats.lastOfflineStart) {
+                    // 结束离线事件
+                    const offlineDuration = now - stats.lastOfflineStart;
+                    stats.totalOfflineTime += offlineDuration;
+                    stats.offlineEvents.push({
+                        start: stats.lastOfflineStart,
+                        end: now,
+                        duration: offlineDuration
+                    });
+                    stats.isCurrentlyOffline = false;
+                    stats.lastOfflineStart = null;
+                }
+
+                // 开始在线事件
+                stats.isCurrentlyOnline = true;
+                stats.lastOnlineStart = now;
+
+            } else if (!isOnline && stats.isCurrentlyOnline) {
+                // 刚刚离线
+                if (stats.lastOnlineStart) {
+                    // 结束在线事件
+                    const onlineDuration = now - stats.lastOnlineStart;
+                    stats.totalOnlineTime += onlineDuration;
+                    stats.onlineEvents.push({
+                        start: stats.lastOnlineStart,
+                        end: now,
+                        duration: onlineDuration
+                    });
+                    stats.isCurrentlyOnline = false;
+                    stats.lastOnlineStart = null;
+                }
+
+                // 开始离线事件
+                stats.isCurrentlyOffline = true;
+                stats.lastOfflineStart = now;
+                stats.offlineCount++;
+
+            } else if (!isOnline && !stats.isCurrentlyOffline) {
+                // 首次离线
+                stats.isCurrentlyOffline = true;
+                stats.lastOfflineStart = now;
+                stats.offlineCount++;
+
+            } else if (isOnline && !stats.isCurrentlyOnline) {
+                // 首次在线
+                stats.isCurrentlyOnline = true;
+                stats.lastOnlineStart = now;
+            }
+
+            // 更新显示
+            updateStatsDisplay(targetName);
+        }
+
+        function updateStatsDisplay(targetName) {
+            const stats = detailedStats[targetName];
+            const now = Date.now();
+
+            // 计算当前状态的时长
+            let currentOnlineTime = 0;
+            let currentOfflineTime = 0;
+
+            if (stats.isCurrentlyOnline && stats.lastOnlineStart) {
+                currentOnlineTime = now - stats.lastOnlineStart;
+            }
+            if (stats.isCurrentlyOffline && stats.lastOfflineStart) {
+                currentOfflineTime = now - stats.lastOfflineStart;
+            }
+
+            const totalOnlineTime = stats.totalOnlineTime + currentOnlineTime;
+            const totalOfflineTime = stats.totalOfflineTime + currentOfflineTime;
+            const totalSessionTime = now - stats.sessionStart;
+
+            // 更新表格中的统计
+            const latencyStatsElement = document.getElementById(`${targetName}-latency-stats`);
+            if (latencyStatsElement) {
+                latencyStatsElement.innerHTML = `
+                    最小: ${stats.minLatency !== null ? stats.minLatency + 'ms' : '—'}<br>
+                    最大: ${stats.maxLatency !== null ? stats.maxLatency + 'ms' : '—'}<br>
+                    平均: ${stats.avgLatency !== null ? Math.round(stats.avgLatency) + 'ms' : '—'}
+                `;
+            }
+
+            const onlineStatsElement = document.getElementById(`${targetName}-online-stats`);
+            if (onlineStatsElement) {
+                const onlineRate = totalSessionTime > 0 ? (totalOnlineTime / totalSessionTime * 100).toFixed(1) : '0';
+                onlineStatsElement.innerHTML = `
+                    在线时长: ${formatDuration(Math.round(totalOnlineTime / 1000))}<br>
+                    在线率: ${onlineRate}%
+                `;
+            }
+
+            const offlineStatsElement = document.getElementById(`${targetName}-offline-stats`);
+            if (offlineStatsElement) {
+                offlineStatsElement.innerHTML = `
+                    离线次数: ${stats.offlineCount}<br>
+                    离线时长: ${formatDuration(Math.round(totalOfflineTime / 1000))}
+                `;
+            }
+
+            // 更新详细统计表格
+            const successRate = stats.totalChecks > 0 ? (stats.successfulChecks / stats.totalChecks * 100).toFixed(1) : '0';
+            const onlineRate = totalSessionTime > 0 ? (totalOnlineTime / totalSessionTime * 100).toFixed(1) : '0';
+
+            // 生成离线详情
+            let offlineDetails = '暂无离线记录';
+            if (stats.offlineEvents.length > 0 || stats.isCurrentlyOffline) {
+                let offlineList = [];
+
+                // 添加当前正在进行的离线（如果有）
+                if (stats.isCurrentlyOffline && stats.lastOfflineStart) {
+                    const startTime = new Date(stats.lastOfflineStart).toLocaleString('zh-CN', {
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    const currentDuration = formatDuration(Math.round((now - stats.lastOfflineStart) / 1000));
+                    offlineList.push(`<span class="text-red-600 font-medium">${startTime} - 进行中 (${currentDuration})</span>`);
+                }
+
+                // 添加历史离线记录
+                if (stats.offlineEvents.length > 0) {
+                    const recentOfflines = stats.offlineEvents.slice(-2); // 显示最近2次历史离线
+                    const historicalOfflines = recentOfflines.map(event => {
+                        const startTime = new Date(event.start).toLocaleString('zh-CN', {
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        const endTime = new Date(event.end).toLocaleString('zh-CN', {
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        const duration = formatDuration(Math.round(event.duration / 1000));
+                        return `${startTime} - ${endTime} (${duration})`;
+                    });
+                    offlineList = offlineList.concat(historicalOfflines);
+                }
+
+                offlineDetails = offlineList.join('<br>');
+
+                // 如果有更多历史记录，显示提示
+                const totalHistorical = stats.offlineEvents.length;
+                const shownHistorical = Math.min(2, totalHistorical);
+                if (totalHistorical > shownHistorical) {
+                    offlineDetails += `<br><span class="text-xs text-gray-400">...还有${totalHistorical - shownHistorical}次历史记录</span>`;
+                }
+            }
+
+            // 更新表格中的各个单元格
+            const updateElement = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value;
+            };
+
+            const updateElementHTML = (id, html) => {
+                const element = document.getElementById(id);
+                if (element) element.innerHTML = html;
+            };
+
+            updateElement(`${targetName}-detailed-min`, stats.minLatency !== null ? stats.minLatency + 'ms' : '—');
+            updateElement(`${targetName}-detailed-max`, stats.maxLatency !== null ? stats.maxLatency + 'ms' : '—');
+            updateElement(`${targetName}-detailed-avg`, stats.avgLatency !== null ? Math.round(stats.avgLatency) + 'ms' : '—');
+            updateElement(`${targetName}-detailed-total`, stats.totalChecks);
+            updateElement(`${targetName}-detailed-success`, stats.successfulChecks);
+            updateElement(`${targetName}-detailed-rate`, successRate + '%');
+            updateElement(`${targetName}-detailed-online-time`, formatDuration(Math.round(totalOnlineTime / 1000)));
+            updateElement(`${targetName}-detailed-online-rate`, onlineRate + '%');
+            updateElement(`${targetName}-detailed-offline-count`, stats.offlineCount);
+            updateElement(`${targetName}-detailed-offline-time`, formatDuration(Math.round(totalOfflineTime / 1000)));
+            updateElementHTML(`${targetName}-detailed-offline-details`, `<div class="max-w-xs"><div class="text-xs text-gray-600">${offlineDetails}</div></div>`);
+        }
+
+        function formatDuration(seconds) {
+            if (seconds < 60) return `${seconds}s`;
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            return `${hours}h ${minutes}m`;
+        }
+
+        function updateTable(name, ok, latency) {
+            const statusElement = document.getElementById(`${name}-status`);
+            const latencyElement = document.getElementById(`${name}-latency`);
+            const timeElement = document.getElementById(`${name}-time`);
+
+            // 更新详细统计
+            updateDetailedStats(name, ok, latency);
+
+            // 更新状态
+            if (ok) {
+                const statusContainer = statusElement.parentElement;
+                statusContainer.innerHTML = `
+                    <span class="status-indicator status-online"></span>
+                    <span id="${name}-status" class="ml-2 text-sm w-12 text-center text-green-600 font-medium">在线</span>
+                `;
+                latencyElement.textContent = latency + "ms";
+                latencyElement.className = latency < 100 ? "px-4 py-4 whitespace-nowrap text-center text-sm font-mono text-green-600 font-bold" :
+                    latency < 300 ? "px-4 py-4 whitespace-nowrap text-center text-sm font-mono text-yellow-600 font-bold" :
+                        "px-4 py-4 whitespace-nowrap text-center text-sm font-mono text-red-600 font-bold";
+            } else {
+                const statusContainer = statusElement.parentElement;
+                statusContainer.innerHTML = `
+                    <span class="status-indicator status-offline"></span>
+                    <span id="${name}-status" class="ml-2 text-sm w-12 text-center text-red-600 font-medium">离线</span>
+                `;
+                latencyElement.textContent = "—";
+                latencyElement.className = "px-4 py-4 whitespace-nowrap text-center text-sm font-mono text-gray-500";
+            }
+
+            timeElement.textContent = new Date().toLocaleTimeString('zh-CN');
+        }
+
+        async function runCheck() {
+            const ts = Date.now();
+
+            // 更新所有启用目标为检测中状态
+            targets.forEach(t => {
+                if (t.enabled) {
+                    const statusElement = document.getElementById(`${t.name}-status`);
+                    const statusContainer = statusElement.parentElement;
+                    statusContainer.innerHTML = `
+                        <span class="status-indicator status-checking"></span>
+                        <span id="${t.name}-status" class="ml-2 text-sm w-12 text-center text-yellow-600">检测中</span>
+                    `;
+                }
+            });
+
+            // 添加时间标签
+            latencyChart.data.labels.push(ts);
+            if (latencyChart.data.labels.length > HISTORY_LENGTH) {
+                latencyChart.data.labels.shift();
+            }
+
+            // 并发检测所有启用的目标
+            await Promise.all(targets.map(async (t, idx) => {
+                if (!t.enabled) return;
+
+                const rawLatency = await pingTarget(t);
+                const latency = optimizeLatency(rawLatency, t.name);
+                const ok = latency !== null;
+
+                updateTable(t.name, ok, latency);
+
+                const ds = latencyChart.data.datasets[idx].data;
+                ds.push({ x: ts, y: latency });
+                if (ds.length > HISTORY_LENGTH) {
+                    ds.shift();
+                }
+            }));
+
+            latencyChart.update("none");
+        }
+
+        function startLoop() {
+            if (timerId) clearInterval(timerId);
+            timerId = setInterval(runCheck, UPDATE_INTERVAL);
+        }
+
+        // =============== 事件监听器 ===============
+        intervalSelect.addEventListener("change", () => {
+            UPDATE_INTERVAL = Number(intervalSelect.value);
+            HISTORY_LENGTH = Math.floor((TIME_RANGE_MINUTES * 60 * 1000) / UPDATE_INTERVAL);
+            startLoop();
+        });
+
+        timeRangeSelect.addEventListener("change", () => {
+            TIME_RANGE_MINUTES = Number(timeRangeSelect.value);
+            HISTORY_LENGTH = Math.floor((TIME_RANGE_MINUTES * 60 * 1000) / UPDATE_INTERVAL);
+
+            // 更新时间轴单位
+            latencyChart.options.scales.x.time.unit = TIME_RANGE_MINUTES <= 5 ? "second" : "minute";
+
+            // 更新显示文本
+            const rangeText = TIME_RANGE_MINUTES < 1 ? `${TIME_RANGE_MINUTES * 60} 秒` :
+                TIME_RANGE_MINUTES === 1 ? "1 分钟" :
+                    TIME_RANGE_MINUTES < 60 ? `${TIME_RANGE_MINUTES} 分钟` :
+                        `${TIME_RANGE_MINUTES / 60} 小时`;
+            document.getElementById("currentTimeRange").textContent = rangeText;
+
+            // 清理超出范围的历史数据
+            const cutoffTime = Date.now() - TIME_RANGE_MINUTES * 60 * 1000;
+            latencyChart.data.labels = latencyChart.data.labels.filter(label => label >= cutoffTime);
+            latencyChart.data.datasets.forEach(dataset => {
+                dataset.data = dataset.data.filter(point => point.x >= cutoffTime);
+            });
+            latencyChart.update("none");
+        });
+
+        // =============== 高级PNG导出功能 ===============
+        function setupPNGExport() {
+            const exportBtn = document.getElementById("exportBtn");
+            if (!exportBtn) return;
+
+            exportBtn.addEventListener("click", () => {
+                const originalText = exportBtn.textContent;
+                exportBtn.textContent = "📊 导出中...";
+                exportBtn.disabled = true;
+
+                setTimeout(() => {
+                    try {
+                        // 创建一个临时canvas用于生成带背景的图片
+                        const tempCanvas = document.createElement('canvas');
+                        const tempCtx = tempCanvas.getContext('2d');
+
+                        // 设置canvas尺寸 - 为表格布局优化
+                        tempCanvas.width = Math.max(latencyChart.canvas.width, 1600); // 增加宽度以适应新列
+                        const enabledCount = targets.filter(t => t.enabled).length;
+                        const tableHeight = Math.max(250, enabledCount * 50 + 150); // 根据目标数量动态计算表格高度，适应更大字体
+                        tempCanvas.height = latencyChart.canvas.height + 450 + tableHeight; // 优化总高度
+
+                        // 绘制白色背景
+                        tempCtx.fillStyle = '#ffffff';
+                        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+                        // 绘制标题
+                        tempCtx.fillStyle = '#1f2937';
+                        tempCtx.font = 'bold 28px Arial, sans-serif';
+                        tempCtx.textAlign = 'center';
+                        tempCtx.fillText('网络延迟监测报告', tempCanvas.width / 2, 40);
+
+                        // 绘制基本信息
+                        tempCtx.font = '14px Arial, sans-serif';
+                        tempCtx.fillStyle = '#6b7280';
+                        const now = new Date();
+                        const timeInfo = `导出时间: ${now.toLocaleString('zh-CN')} | 时间范围: ${document.getElementById("currentTimeRange").textContent} | 刷新间隔: ${intervalSelect.options[intervalSelect.selectedIndex].text}`;
+                        tempCtx.fillText(timeInfo, tempCanvas.width / 2, 70);
+
+                        const enabledTargets = targets.filter(t => t.enabled).map(t => t.name).join(', ');
+                        tempCtx.fillText(`监测目标: ${enabledTargets}`, tempCanvas.width / 2, 90);
+
+                        // 绘制图表
+                        const chartY = 120;
+                        tempCtx.drawImage(latencyChart.canvas, (tempCanvas.width - latencyChart.canvas.width) / 2, chartY);
+
+                        // 绘制详细统计信息 - 表格式布局
+                        const statsY = chartY + latencyChart.canvas.height + 50;
+                        tempCtx.fillStyle = '#1f2937';
+                        tempCtx.font = 'bold 22px Arial, sans-serif';
+                        tempCtx.textAlign = 'center';
+                        tempCtx.fillText('详细统计数据', tempCanvas.width / 2, statsY);
+
+                        // 绘制工具原理说明
+                        const principleY = statsY + 40;
+                        tempCtx.fillStyle = '#1f2937';
+                        tempCtx.font = 'bold 18px Arial, sans-serif';
+                        tempCtx.textAlign = 'left';
+                        tempCtx.fillText('🔬 工具原理说明', 40, principleY);
+
+                        tempCtx.font = '13px Arial, sans-serif';
+                        tempCtx.fillStyle = '#374151';
+                        const principleText = [
+                            '延迟测试原理: 使用HTTP请求响应时间测量，包含DNS解析、TCP连接、HTTP协议处理等完整网络访问时间',
+                            '与ping区别: ping测试ICMP协议的纯网络延迟，本工具测试实际网页访问延迟，更贴近真实使用体验',
+                            '数据统计: 最小/最大/平均延迟基于所有成功请求计算，在线/离线统计基于连续状态变化计算'
+                        ];
+
+                        principleText.forEach((line, index) => {
+                            tempCtx.fillText(line, 40, principleY + 25 + index * 18);
+                        });
+
+                        // 绘制统计数据表格
+                        const tableY = principleY + 120;
+                        const enabledTargetsList = targets.filter(t => t.enabled);
+
+                        if (enabledTargetsList.length > 0) {
+                            // 表格参数 - 增大字体后调整尺寸
+                            const tableWidth = tempCanvas.width - 80;
+                            const tableX = 40;
+                            const rowHeight = 50; // 增大行高以适应更大字体
+                            const colWidths = [100, 70, 70, 70, 70, 70, 70, 70, 70, 80, 200]; // 增加离线时长和离线详情列
+
+                            // 绘制表格标题
+                            tempCtx.fillStyle = '#1f2937';
+                            tempCtx.font = 'bold 16px Arial, sans-serif';
+                            tempCtx.textAlign = 'center';
+                            tempCtx.fillText('统计数据表格', tempCanvas.width / 2, tableY);
+
+                            // 绘制表头
+                            const headerY = tableY + 30;
+                            tempCtx.fillStyle = '#f3f4f6';
+                            tempCtx.fillRect(tableX, headerY, tableWidth, rowHeight);
+                            tempCtx.strokeStyle = '#d1d5db';
+                            tempCtx.lineWidth = 1;
+                            tempCtx.strokeRect(tableX, headerY, tableWidth, rowHeight);
+
+                            const headers = ['目标', '最小延迟', '最大延迟', '平均延迟', '检测次数', '成功次数', '成功率', '在线率', '离线次数', '离线时长', '离线详情'];
+                            let currentX = tableX;
+
+                            tempCtx.fillStyle = '#374151';
+                            tempCtx.font = 'bold 17px Arial, sans-serif'; // 增大字体40%
+                            tempCtx.textAlign = 'center';
+
+                            headers.forEach((header, index) => {
+                                const colWidth = colWidths[index];
+                                tempCtx.fillText(header, currentX + colWidth / 2, headerY + 30); // 调整垂直位置
+
+                                // 绘制列分隔线
+                                if (index < headers.length - 1) {
+                                    tempCtx.beginPath();
+                                    tempCtx.moveTo(currentX + colWidth, headerY);
+                                    tempCtx.lineTo(currentX + colWidth, headerY + rowHeight);
+                                    tempCtx.stroke();
+                                }
+
+                                currentX += colWidth;
+                            });
+
+                            // 绘制数据行
+                            enabledTargetsList.forEach((target, rowIndex) => {
+                                const stats = detailedStats[target.name];
+                                const now = Date.now();
+
+                                // 计算当前状态时长
+                                let currentOnlineTime = 0;
+                                let currentOfflineTime = 0;
+
+                                if (stats.isCurrentlyOnline && stats.lastOnlineStart) {
+                                    currentOnlineTime = now - stats.lastOnlineStart;
+                                }
+                                if (stats.isCurrentlyOffline && stats.lastOfflineStart) {
+                                    currentOfflineTime = now - stats.lastOfflineStart;
+                                }
+
+                                const totalOnlineTime = stats.totalOnlineTime + currentOnlineTime;
+                                const totalOfflineTime = stats.totalOfflineTime + currentOfflineTime;
+                                const totalSessionTime = now - stats.sessionStart;
+
+                                const rowY = headerY + (rowIndex + 1) * rowHeight;
+
+                                // 绘制行背景
+                                tempCtx.fillStyle = rowIndex % 2 === 0 ? '#ffffff' : '#f9fafb';
+                                tempCtx.fillRect(tableX, rowY, tableWidth, rowHeight);
+                                tempCtx.strokeStyle = '#e5e7eb';
+                                tempCtx.strokeRect(tableX, rowY, tableWidth, rowHeight);
+
+                                // 生成离线详情文本
+                                let offlineDetailsText = '无';
+                                if (stats.offlineEvents.length > 0 || stats.isCurrentlyOffline) {
+                                    let offlineList = [];
+
+                                    // 添加当前正在进行的离线（如果有）
+                                    if (stats.isCurrentlyOffline && stats.lastOfflineStart) {
+                                        const startTime = new Date(stats.lastOfflineStart).toLocaleString('zh-CN', {
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        });
+                                        const currentDuration = formatDuration(Math.round((now - stats.lastOfflineStart) / 1000));
+                                        offlineList.push(`${startTime}-进行中(${currentDuration})`);
+                                    }
+
+                                    // 添加最近的历史离线记录
+                                    if (stats.offlineEvents.length > 0) {
+                                        const recentOffline = stats.offlineEvents[stats.offlineEvents.length - 1];
+                                        const startTime = new Date(recentOffline.start).toLocaleString('zh-CN', {
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        });
+                                        const endTime = new Date(recentOffline.end).toLocaleString('zh-CN', {
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        });
+                                        const duration = formatDuration(Math.round(recentOffline.duration / 1000));
+                                        offlineList.push(`${startTime}-${endTime}(${duration})`);
+                                    }
+
+                                    offlineDetailsText = offlineList.join('; ');
+                                    if (stats.offlineEvents.length > 1) {
+                                        offlineDetailsText += `; 等${stats.offlineEvents.length}次`;
+                                    }
+                                }
+
+                                // 准备数据
+                                const rowData = [
+                                    target.name,
+                                    stats.minLatency !== null ? stats.minLatency + 'ms' : '—',
+                                    stats.maxLatency !== null ? stats.maxLatency + 'ms' : '—',
+                                    stats.avgLatency !== null ? Math.round(stats.avgLatency) + 'ms' : '—',
+                                    stats.totalChecks.toString(),
+                                    stats.successfulChecks.toString(),
+                                    stats.totalChecks > 0 ? (stats.successfulChecks / stats.totalChecks * 100).toFixed(1) + '%' : '0%',
+                                    totalSessionTime > 0 ? (totalOnlineTime / totalSessionTime * 100).toFixed(1) + '%' : '0%',
+                                    stats.offlineCount.toString(),
+                                    formatDuration(Math.round(totalOfflineTime / 1000)), // 离线时长
+                                    offlineDetailsText // 离线详情
+                                ];
+
+                                // 绘制数据
+                                currentX = tableX;
+                                tempCtx.fillStyle = '#374151';
+                                tempCtx.font = '15px Arial, sans-serif'; // 增大字体40%
+                                tempCtx.textAlign = 'center';
+
+                                rowData.forEach((data, colIndex) => {
+                                    const colWidth = colWidths[colIndex];
+
+                                    // 第一列（目标名称）特殊处理
+                                    if (colIndex === 0) {
+                                        // 绘制颜色指示器
+                                        tempCtx.fillStyle = target.color;
+                                        tempCtx.fillRect(currentX + 10, rowY + 12, 12, 12);
+
+                                        // 绘制目标名称
+                                        tempCtx.fillStyle = '#374151';
+                                        tempCtx.textAlign = 'left';
+                                        tempCtx.fillText(data, currentX + 30, rowY + 30); // 调整垂直位置
+                                        tempCtx.textAlign = 'center';
+                                    } else if (colIndex === rowData.length - 1) {
+                                        // 离线详情列 - 使用更小字体和左对齐
+                                        tempCtx.font = '11px Arial, sans-serif';
+                                        tempCtx.textAlign = 'left';
+                                        // 处理长文本换行
+                                        const maxWidth = colWidth - 10;
+                                        const words = data.split(' ');
+                                        let line = '';
+                                        let y = rowY + 20;
+
+                                        for (let n = 0; n < words.length; n++) {
+                                            const testLine = line + words[n] + ' ';
+                                            const metrics = tempCtx.measureText(testLine);
+                                            const testWidth = metrics.width;
+                                            if (testWidth > maxWidth && n > 0) {
+                                                tempCtx.fillText(line, currentX + 5, y);
+                                                line = words[n] + ' ';
+                                                y += 15;
+                                            } else {
+                                                line = testLine;
+                                            }
+                                        }
+                                        tempCtx.fillText(line, currentX + 5, y);
+
+                                        // 恢复字体和对齐方式
+                                        tempCtx.font = '15px Arial, sans-serif';
+                                        tempCtx.textAlign = 'center';
+                                    } else {
+                                        tempCtx.fillText(data, currentX + colWidth / 2, rowY + 30); // 调整垂直位置
+                                    }
+
+                                    // 绘制列分隔线
+                                    if (colIndex < rowData.length - 1) {
+                                        tempCtx.strokeStyle = '#e5e7eb';
+                                        tempCtx.beginPath();
+                                        tempCtx.moveTo(currentX + colWidth, rowY);
+                                        tempCtx.lineTo(currentX + colWidth, rowY + rowHeight);
+                                        tempCtx.stroke();
+                                    }
+
+                                    currentX += colWidth;
+                                });
+                            });
+                        }
+
+                        // 转换为PNG并下载
+                        const url = tempCanvas.toDataURL('image/png', 1.0);
+                        const link = document.createElement('a');
+                        const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-');
+                        link.download = `网络延迟监测详细报告-${timestamp}.png`;
+                        link.href = url;
+                        link.click();
+
+                        showNotification('详细报告导出成功！', 'success');
+                    } catch (error) {
+                        console.error('导出失败:', error);
+                        showNotification('图表导出失败', 'error');
+                    }
+
+                    exportBtn.textContent = originalText;
+                    exportBtn.disabled = false;
+                }, 500);
+            });
+        }
+
+        // 通知功能
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg transform translate-x-full transition-transform duration-300`;
+
+            const colors = {
+                'success': 'bg-green-500 text-white',
+                'error': 'bg-red-500 text-white',
+                'info': 'bg-blue-500 text-white',
+                'warning': 'bg-yellow-500 text-black'
+            };
+
+            notification.className += ' ' + colors[type];
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => notification.classList.remove('translate-x-full'), 10);
+
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        // =============== 延迟优化 ===============
+        function optimizeLatency(rawLatency, targetName) {
+            if (rawLatency === null) return null;
+
+            let optimized = Math.max(1, Math.min(rawLatency, 10000));
+
+            if (rawLatency !== optimized) {
+                console.log(`${targetName} 延迟优化: ${rawLatency}ms -> ${optimized}ms`);
+            }
+
+            return optimized;
+        }
+
+        // =============== 缩放适配修复 ===============
+
+        // 修复浏览器缩放时的按钮点击问题
+        function fixModalButtonsForZoom() {
+            const buttons = document.querySelectorAll('#confirmCustomUrl, #cancelCustomUrl, #closeCustomModal, #confirmImport, #cancelImport, #closeImportModal');
+            buttons.forEach(button => {
+                if (button) {
+                    button.style.pointerEvents = 'auto';
+                    button.style.position = 'relative';
+                    button.style.zIndex = '10001';
+                    button.style.cursor = 'pointer';
+                }
+            });
+        }
+
+        // 监听窗口缩放变化
+        window.addEventListener('resize', fixModalButtonsForZoom);
+        window.addEventListener('orientationchange', fixModalButtonsForZoom);
+
+        // =============== 全局函数声明 ===============
+        // 将函数添加到全局作用域，以便HTML onclick可以访问
+        window.editCustomTarget = editCustomTarget;
+        window.deleteCustomTarget = deleteCustomTarget;
+        window.toggleCustomTarget = toggleCustomTarget;
+        window.toggleGroupCollapse = toggleGroupCollapse;
+
+        // =============== 按钮事件绑定函数 ===============
+        function setupAllEventListeners() {
+            // PNG导出按钮
+            const exportBtn = document.getElementById("exportBtn");
+            if (exportBtn) {
+                exportBtn.addEventListener("click", () => {
+                    const originalText = exportBtn.textContent;
+                    exportBtn.textContent = "📊 导出中...";
+                    exportBtn.disabled = true;
+
+                    // 找到详细统计表格容器
+                    const detailedStatsSection = document.querySelector('.bg-white.rounded-2xl.shadow.p-6:has(#detailedStatsTable)');
+                    
+                    if (!detailedStatsSection) {
+                        showNotification('未找到详细统计表格', 'error');
+                        exportBtn.textContent = originalText;
+                        exportBtn.disabled = false;
+                        return;
+                    }
+
+                    // 使用html2canvas截图详细统计表格
+                    if (typeof html2canvas !== 'undefined') {
+                        html2canvas(detailedStatsSection, {
+                            backgroundColor: '#ffffff',
+                            scale: 2, // 提高清晰度
+                            useCORS: true,
+                            allowTaint: true,
+                            width: detailedStatsSection.offsetWidth,
+                            height: detailedStatsSection.offsetHeight
+                        }).then(canvas => {
+                            // 创建下载链接
+                            const link = document.createElement('a');
+                            link.download = `网络延迟详细统计_${new Date().toISOString().split('T')[0]}.png`;
+                            link.href = canvas.toDataURL('image/png');
+                            link.click();
+
+                            showNotification('统计表格已导出', 'success');
+                        }).catch(error => {
+                            console.error('导出失败:', error);
+                            showNotification('导出失败，请重试', 'error');
+                        }).finally(() => {
+                            exportBtn.textContent = originalText;
+                            exportBtn.disabled = false;
+                        });
+                    } else {
+                        showNotification('html2canvas库未加载，无法导出', 'error');
+                        exportBtn.textContent = originalText;
+                        exportBtn.disabled = false;
+                    }
+                });
+            }
+
+            // 自定义网址按钮
+            const addCustomBtn = document.getElementById("addCustomBtn");
+            if (addCustomBtn) {
+                addCustomBtn.addEventListener("click", showCustomUrlModal);
+            }
+
+            // 导出配置按钮
+            const exportConfigBtn = document.getElementById("exportConfigBtn");
+            if (exportConfigBtn) {
+                exportConfigBtn.addEventListener("click", exportConfig);
+            }
+
+            // 导入配置按钮
+            const importConfigBtn = document.getElementById("importConfigBtn");
+            if (importConfigBtn) {
+                importConfigBtn.addEventListener("click", () => {
+                    const modal = document.getElementById('importConfigModal');
+                    const modalContent = document.getElementById('importModalContent');
+                    if (modal && modalContent) {
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                        setTimeout(() => {
+                            modalContent.classList.remove('scale-95', 'opacity-0');
+                            modalContent.classList.add('scale-100', 'opacity-100');
+                        }, 10);
+                    }
+                });
+            }
+
+            // 清除数据按钮
+            const clearBtn = document.getElementById("clearBtn");
+            if (clearBtn) {
+                clearBtn.addEventListener("click", () => {
+                    if (confirm('确定要清除所有历史数据吗？此操作不可撤销。')) {
+                        latencyChart.data.labels = [];
+                        latencyChart.data.datasets.forEach(dataset => {
+                            dataset.data = [];
+                        });
+                        latencyChart.update("none");
+
+                        // 重置详细统计
+                        Object.keys(detailedStats).forEach(targetName => {
+                            initializeStatsForTarget(targetName);
+                        });
+
+                        // 重置表格状态
+                        targets.forEach(t => {
+                            const statusElement = document.getElementById(`${t.name}-status`);
+                            const latencyElement = document.getElementById(`${t.name}-latency`);
+                            const timeElement = document.getElementById(`${t.name}-time`);
+
+                            if (statusElement) {
+                                const statusContainer = statusElement.parentElement;
+                                statusContainer.innerHTML = `
+                                    <span class="status-indicator status-checking"></span>
+                                    <span id="${t.name}-status" class="ml-2 text-sm w-12 text-center text-gray-600">待检测</span>
+                                `;
+                            }
+                            if (latencyElement) {
+                                latencyElement.textContent = "—";
+                                latencyElement.className = "px-4 py-4 whitespace-nowrap text-center text-sm font-mono text-gray-500";
+                            }
+                            if (timeElement) {
+                                timeElement.textContent = "—";
+                            }
+                        });
+
+                        // 重置详细统计卡片
+                        initializeDetailedStats();
+
+                        showNotification('所有数据已清除', 'info');
+                    }
+                });
+            }
+
+            // 其他模态框相关按钮
+            const closeCustomModal = document.getElementById('closeCustomModal');
+            if (closeCustomModal) {
+                closeCustomModal.addEventListener('click', hideCustomUrlModal);
+            }
+
+            const cancelCustomUrl = document.getElementById('cancelCustomUrl');
+            if (cancelCustomUrl) {
+                cancelCustomUrl.addEventListener('click', hideCustomUrlModal);
+            }
+
+            const confirmCustomUrl = document.getElementById('confirmCustomUrl');
+            if (confirmCustomUrl) {
+                confirmCustomUrl.addEventListener('click', handleAddCustomUrl);
+            }
+
+            // 导入配置模态框按钮
+            const closeImportModal = document.getElementById('closeImportModal');
+            if (closeImportModal) {
+                closeImportModal.addEventListener('click', () => {
+                    const modal = document.getElementById('importConfigModal');
+                    const modalContent = document.getElementById('importModalContent');
+                    if (modal && modalContent) {
+                        modalContent.classList.remove('scale-100', 'opacity-100');
+                        modalContent.classList.add('scale-95', 'opacity-0');
+                        setTimeout(() => {
+                            modal.classList.add('hidden');
+                            modal.classList.remove('flex');
+                        }, 150);
+                    }
+                });
+            }
+
+            const cancelImport = document.getElementById('cancelImport');
+            if (cancelImport) {
+                cancelImport.addEventListener('click', () => {
+                    document.getElementById('closeImportModal').click();
+                });
+            }
+
+            const confirmImport = document.getElementById('confirmImport');
+            if (confirmImport) {
+                confirmImport.addEventListener('click', () => {
+                    const configText = document.getElementById('configTextInput').value.trim();
+                    const errorDiv = document.getElementById('importError');
+
+                    if (!configText) {
+                        errorDiv.innerHTML = '<div class="bg-red-50 border border-red-200 rounded-md p-4"><h5 class="font-medium text-red-900 mb-2">导入失败</h5><p class="text-sm text-red-700">请输入配置内容</p></div>';
+                        errorDiv.classList.remove('hidden');
+                        return;
+                    }
+
+                    try {
+                        importConfig(configText);
+                        document.getElementById('closeImportModal').click();
+                        document.getElementById('configTextInput').value = '';
+                        errorDiv.classList.add('hidden');
+                    } catch (error) {
+                        errorDiv.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-md p-4"><h5 class="font-medium text-red-900 mb-2">导入失败</h5><p class="text-sm text-red-700">${error.message}</p></div>`;
+                        errorDiv.classList.remove('hidden');
+                    }
+                });
+            }
+
+            // 模态框背景点击关闭
+            const customUrlModal = document.getElementById('customUrlModal');
+            if (customUrlModal) {
+                customUrlModal.addEventListener('click', function (e) {
+                    if (e.target === this) {
+                        hideCustomUrlModal();
+                    }
+                });
+            }
+
+            // 键盘事件
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    hideCustomUrlModal();
+                }
+            });
+
+            // 自定义网址模态框中的标签页切换事件
+            const singleAddTab = document.getElementById('singleAddTab');
+            if (singleAddTab) {
+                singleAddTab.addEventListener('click', () => {
+                    switchTab('singleAddTab', 'singleAddContent');
+                });
+            }
+
+            const batchManageTab = document.getElementById('batchManageTab');
+            if (batchManageTab) {
+                batchManageTab.addEventListener('click', () => {
+                    switchTab('batchManageTab', 'batchManageContent');
+                });
+            }
+
+            const tableImportTab = document.getElementById('tableImportTab');
+            if (tableImportTab) {
+                tableImportTab.addEventListener('click', () => {
+                    switchTab('tableImportTab', 'tableImportContent');
+                });
+            }
+
+            // 下载模板功能
+            const downloadTemplateBtn = document.getElementById('downloadTemplate');
+            if (downloadTemplateBtn) {
+                downloadTemplateBtn.addEventListener('click', downloadTemplate);
+            }
+
+            // 文件上传功能
+            const uploadArea = document.getElementById('uploadArea');
+            if (uploadArea) {
+                uploadArea.addEventListener('click', () => {
+                    const fileInput = document.getElementById('excelFileInput');
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                });
+            }
+
+            const excelFileInput = document.getElementById('excelFileInput');
+            if (excelFileInput) {
+                excelFileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const importButton = document.getElementById('importFromTable');
+                        if (importButton) {
+                            importButton.disabled = false;
+                        }
+                        const uploadArea = document.getElementById('uploadArea');
+                        if (uploadArea) {
+                            uploadArea.innerHTML = `
+                                <svg class="mx-auto h-12 w-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="mt-2 text-sm text-green-600 font-medium">已选择文件: ${file.name}</p>
+                                <p class="text-xs text-gray-500">点击"导入表格数据"按钮开始导入</p>
+                            `;
+                        }
+                    }
+                });
+            }
+
+            const importFromTable = document.getElementById('importFromTable');
+            if (importFromTable) {
+                importFromTable.addEventListener('click', () => {
+                    const file = document.getElementById('excelFileInput').files[0];
+                    if (file) {
+                        handleTableImport(file);
+                    }
+                });
+            }
+
+            // 批量管理功能
+            const addNewFromBatch = document.getElementById('addNewFromBatch');
+            if (addNewFromBatch) {
+                addNewFromBatch.addEventListener('click', () => {
+                    switchTab('singleAddTab', 'singleAddContent');
+                });
+            }
+
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', (e) => {
+                    const checkboxes = document.querySelectorAll('.custom-target-checkbox');
+                    checkboxes.forEach(cb => cb.checked = e.target.checked);
+                });
+            }
+
+            const selectAllCustom = document.getElementById('selectAllCustom');
+            if (selectAllCustom) {
+                selectAllCustom.addEventListener('click', () => {
+                    const checkboxes = document.querySelectorAll('.custom-target-checkbox');
+                    checkboxes.forEach(cb => cb.checked = true);
+                    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.checked = true;
+                    }
+                });
+            }
+
+            const deleteSelectedCustom = document.getElementById('deleteSelectedCustom');
+            if (deleteSelectedCustom) {
+                deleteSelectedCustom.addEventListener('click', () => {
+                    const selectedCheckboxes = document.querySelectorAll('.custom-target-checkbox:checked');
+                    if (selectedCheckboxes.length === 0) {
+                        showNotification('请先选择要删除的目标', 'warning');
+                        return;
+                    }
+
+                    if (confirm(`确定要删除选中的 ${selectedCheckboxes.length} 个监测目标吗？`)) {
+                        selectedCheckboxes.forEach(cb => {
+                            const name = cb.getAttribute('data-name');
+                            const index = targets.findIndex(t => t.name === name);
+                            if (index >= 0) {
+                                targets.splice(index, 1);
+                                delete detailedStats[name];
+                            }
+                        });
+
+                        // 重新初始化界面
+                        initializeTargetSelector();
+                        initializeTable();
+                        initializeDetailedStats();
+                        rebuildChartDatasets();
+                        refreshCustomTargetsTable();
+
+                        showNotification(`已删除 ${selectedCheckboxes.length} 个监测目标`, 'success');
+                    }
+                });
+            }
+
+            // 分组管理事件监听器
+            const groupFilterSelect = document.getElementById('groupFilterSelect');
+            if (groupFilterSelect) {
+                groupFilterSelect.addEventListener('change', (e) => {
+                    filterByGroup(e.target.value);
+                });
+            }
+
+            const viewModeList = document.getElementById('viewModeList');
+            if (viewModeList) {
+                viewModeList.addEventListener('click', () => {
+                    switchViewMode('list');
+                });
+            }
+
+            const viewModeGroup = document.getElementById('viewModeGroup');
+            if (viewModeGroup) {
+                viewModeGroup.addEventListener('click', () => {
+                    switchViewMode('group');
+                });
+            }
+
+            const customGroup = document.getElementById('customGroup');
+            if (customGroup) {
+                customGroup.addEventListener('change', handleCustomGroupInput);
+            }
+
+            // 间隔选择器
+            const intervalSelect = document.getElementById("intervalSelect");
+            if (intervalSelect) {
+                intervalSelect.addEventListener("change", () => {
+                    UPDATE_INTERVAL = Number(intervalSelect.value);
+                    HISTORY_LENGTH = Math.floor((TIME_RANGE_MINUTES * 60 * 1000) / UPDATE_INTERVAL);
+                    startLoop();
+                });
+            }
+
+            // 时间范围选择器
+            const timeRangeSelect = document.getElementById("timeRangeSelect");
+            if (timeRangeSelect) {
+                timeRangeSelect.addEventListener("change", () => {
+                    TIME_RANGE_MINUTES = Number(timeRangeSelect.value);
+                    HISTORY_LENGTH = Math.floor((TIME_RANGE_MINUTES * 60 * 1000) / UPDATE_INTERVAL);
+
+                    // 更新时间轴单位
+                    latencyChart.options.scales.x.time.unit = TIME_RANGE_MINUTES <= 5 ? "second" : "minute";
+
+                    // 更新显示文本
+                    const rangeText = TIME_RANGE_MINUTES < 1 ? `${TIME_RANGE_MINUTES * 60} 秒` :
+                        TIME_RANGE_MINUTES === 1 ? "1 分钟" :
+                            TIME_RANGE_MINUTES < 60 ? `${TIME_RANGE_MINUTES} 分钟` :
+                                `${TIME_RANGE_MINUTES / 60} 小时`;
+                    const currentTimeRangeElement = document.getElementById("currentTimeRange");
+                    if (currentTimeRangeElement) {
+                        currentTimeRangeElement.textContent = rangeText;
+                    }
+
+                    // 清理超出范围的历史数据
+                    const cutoffTime = Date.now() - TIME_RANGE_MINUTES * 60 * 1000;
+                    latencyChart.data.labels = latencyChart.data.labels.filter(label => label >= cutoffTime);
+                    latencyChart.data.datasets.forEach(dataset => {
+                        dataset.data = dataset.data.filter(point => point.x >= cutoffTime);
+                    });
+                    latencyChart.update("none");
+                });
+            }
+        }
+
+        // =============== 初始化 ===============
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeGroupSelector();
+            initializeTargetSelector();
+            initializeTable();
+            initializeDetailedStats();
+            initializeChart();
+            updateGroupStats();
+
+            // 绑定所有事件监听器
+            setupAllEventListeners();
+
+            // 修复模态框按钮的缩放问题
+            fixModalButtonsForZoom();
+
+            // 立即开始检测（默认1秒间隔）
+            runCheck();
+            startLoop();
+
+            console.log('实时HTTP延迟监测工具已启动');
+            showNotification('监测工具已启动，正在检测网站延迟...', 'info');
+        });
+    </script>
+</body>
+
+</html>
